@@ -1,0 +1,22 @@
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: gray;
+}
+
+.page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#main {
+    background-color: black;
+    aspect-ratio: 4 / 3;
+    width: 80%;
+    height: auto;
+}
