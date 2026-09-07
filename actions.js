@@ -11,6 +11,12 @@ export class Action {
     }
 }
 
+/**
+ * 
+ * @param {Game} game 
+ * @param {number} direction 
+ * @returns 
+ */
 export function getActionPlan(game, direction) {
     const { stage } = game;
     const { farmer } = stage;
