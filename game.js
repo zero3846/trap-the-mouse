@@ -12,9 +12,18 @@ export class Game {
         this.context = initContext(canvas);
 
         this.stage = getStage(0);
-        this.cellSize = 20;
+        this.cellSize = 48;
         this.stagePixelWidth = this.cellSize * this.stage.width;
         this.stagePixelHeight = this.cellSize * this.stage.height;
+
+        this.imagesLoaded = new Set();
+        this.mouseImage = new Image();
+        this.mouseImage.onload = () => { this.imagesLoaded.add("mouse"); };
+        this.mouseImage.src = "mouse.png";
+
+        this.farmerImage = new Image();
+        this.farmerImage.onload = () => { this.imagesLoaded.add("farmer"); };
+        this.farmerImage.src = "farmer.png";
     }
 }
 
