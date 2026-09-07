@@ -2,6 +2,7 @@ import { getActionPlan } from "./actions.js";
 import { Direction } from "./directions.js";
 import { Farmer, renderFarmer, updateFarmer } from "./farmer.js";
 import { Mouse, renderMouse, updateMouse } from "./mouse.js";
+import { getStage } from "./stage-layouts.js";
 import { renderStage, Stage, updateStage } from "./stage.js";
 
 export class Game {
@@ -13,7 +14,7 @@ export class Game {
         this.canvas = canvas;
         this.context = initContext(canvas);
 
-        this.stage = new Stage(48);
+        this.stage = getStage(0);
         this.cellSize = Math.floor(canvas.width / this.stage.width);
 
         canvas.width = this.cellSize * this.stage.width;

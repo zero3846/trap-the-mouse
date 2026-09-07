@@ -7,22 +7,18 @@ const WALL = 1;
 export class Stage {
     /**
      * 
-     * @param {number} width 
+     * @param {string[]} layout 
      */
-    constructor(width) {
-        this.width = width;
-        this.height = Math.floor(width / 4 * 3);
+    constructor(layout) {
+        this.width = layout[0].length;
+        this.height = layout.length;
         this.grid = new Array(this.width * this.height).fill(FLOOR);
         this.floorColor = "#edd08c";
         this.wallColor = "#8cceed";
 
         for (let i = 0; i < this.height; ++i) {
             for (let j = 0; j < this.width; ++j) {
-                if (i == 0 || i == this.height - 1
-                    || j == 0 || j == this.width - 1
-                ) {
-                    this.setCell(i, j, WALL);
-                }
+                this.setCell(i, j, layout[i].charAt(j) === "#" ? WALL : FLOOR);
             }
         }
     }
