@@ -17,6 +17,6 @@ body {
 #main {
     background-color: black;
     aspect-ratio: 4 / 3;
-    width: 80%;
+    width: min(80%, 1024px);
     height: auto;
 }
