@@ -1,4 +1,5 @@
-import { Game, renderGame, updateGame } from "./game.js";
+import { Direction } from "./directions.js";
+import { Game, renderGame, setupEventListeners, updateGame } from "./game.js";
 
 main();
 
@@ -13,4 +14,6 @@ function main() {
     }
 
     requestAnimationFrame(drawFrame);
+
+    setupEventListeners(game);
 }

@@ -1,3 +1,4 @@
+import { Direction } from "./directions.js";
 import { Game } from "./game.js";
 
 export class Farmer {

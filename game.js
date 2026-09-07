@@ -1,3 +1,5 @@
+import { getActionPlan } from "./actions.js";
+import { Direction } from "./directions.js";
 import { Farmer, renderFarmer, updateFarmer } from "./farmer.js";
 import { Mouse, renderMouse, updateMouse } from "./mouse.js";
 import { renderStage, Stage, updateStage } from "./stage.js";
@@ -40,6 +42,37 @@ function initContext(canvas) {
     canvas.height = canvas.clientHeight * dpr;
     context.scale(dpr, dpr);
     return context;
+}
+
+export function setupEventListeners(game) {
+    window.addEventListener('keydown', (e) => {
+        let direction;
+
+        switch (e.key) {
+            case 'ArrowUp':
+                direction = Direction.UP;
+                break;
+
+            case 'ArrowDown':
+                direction = Direction.DOWN;
+                break;
+
+            case 'ArrowLeft':
+                direction = Direction.LEFT;
+                break;
+
+            case 'ArrowRight':
+                direction = Direction.RIGHT;
+                break;
+        }
+
+        const actions = getActionPlan(game, direction);
+        for (const action of actions) {
+            action.execute();
+        }
+
+        e.preventDefault();
+    });
 }
 
 /**
