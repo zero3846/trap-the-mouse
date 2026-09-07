@@ -1,27 +1,66 @@
 import { Direction } from "./directions.js";
 import { Game } from "./game.js";
+import { Sprite, renderSprite, updateSprite } from "./sprite.js";
 
 const FLOOR = 0;
 const WALL = 1;
 
+/**
+ * @typedef StageCoord
+ * @property {number} row
+ * @property {number} col
+ */
+
+/**
+ * Checks if two coordinates are the same.
+ * @param {StageCoord} c1 
+ * @param {StageCoord} c2 
+ */
+export function isSameCoord(c1, c2) {
+    return c1.row === c2.row && c1.col === c2.col;
+}
+
+/**
+ * @typedef Stage
+ * @property {number} width 
+ * @property {number} height 
+ * @property {number[]} grid 
+ * @property {string} floorColor 
+ * @property {string} wallColor 
+ * @property {Sprite[]} mice 
+ * @property {Sprite} farmer 
+ */
 export class Stage {
     /**
      * 
-     * @param {number} width 
+     * @param {string[]} layout 
      */
-    constructor(width) {
-        this.width = width;
-        this.height = Math.floor(width / 4 * 3);
-        this.grid = new Array(this.width * this.height).fill(FLOOR);
+    constructor(layout) {
+        this.width = layout[0].length;
+        this.height = layout.length;
+        this.grid = new Array(this.width * this.height);
         this.floorColor = "#edd08c";
         this.wallColor = "#8cceed";
 
+        this.mice = [];
+        this.farmer = new Sprite("farmer");
+
         for (let i = 0; i < this.height; ++i) {
             for (let j = 0; j < this.width; ++j) {
-                if (i == 0 || i == this.height - 1
-                    || j == 0 || j == this.width - 1
-                ) {
+                const cell = layout[i].charAt(j);
+
+                if (cell === "F") {
+                    this.farmer.row = i;
+                    this.farmer.col = j;
+                } else if (cell === "M") {
+                    const mouse = new Sprite("mouse");
+                    mouse.row = i;
+                    mouse.col = j;
+                    this.mice.push(mouse);
+                } else if (cell === "#") {
                     this.setCell(i, j, WALL);
+                } else {
+                    this.setCell(i, j, FLOOR);
                 }
             }
         }
@@ -47,106 +86,117 @@ export class Stage {
         this.grid[row * this.width + col] = value;
     }
 
-    rowBefore(row) {
-        return row - 1 >= 0 ? row - 1 : this.height - 1;
+    /**
+     * 
+     * @param {StageCoord} c
+     * @returns 
+     */
+    isWall(c) {
+        return this.cell(c.row, c.col) === WALL;
     }
 
-    rowAfter(row) {
-        return row + 1 < this.height ? row + 1 : 0;
-    }
+    /**
+     * 
+     * @param {StageCoord} c 
+     * @param {number} direction 
+     */
+    neighbor(c, direction) {
+        switch (direction) {
+            case Direction.UP: return {
+                row: indexBefore(c.row, this.height),
+                col: c.col
+            };
 
-    colBefore(col) {
-        return col - 1 >= 0 ? col - 1 : this.width - 1;
-    }
+            case Direction.DOWN: return {
+                row: indexAfter(c.row, this.height),
+                col: c.col
+            };
 
-    colAfter(col) {
-        return col + 1 < this.width ? col + 1 : 0;
-    }
+            case Direction.LEFT: return {
+                row: c.row,
+                col: indexBefore(c.col, this.width)
+            };
 
-    isWall(row, col) {
-        return this.cell(row, col) === WALL;
+            case Direction.RIGHT: return {
+                row: c.row,
+                col: indexAfter(c.col, this.width)
+            };
+        }
+        throw new Error("Invalid direction: " + direction);
     }
 }
 
 /**
  * 
  * @param {Stage} stage 
- * @param {number} row 
- * @param {number} col 
+ * @param {Sprite} sprite
  * @param {number} direction 
- * @param {Game} game 
  */
-export function isDirectionAllowed(stage, row, col, direction, game) {
-    let neighbor;
-    switch (direction) {
-        case Direction.UP:
-            neighbor = {
-                row: stage.rowBefore(row),
-                col
-            };
-            break;
+export function isMoveAllowed(stage, sprite, direction) {
+    const neighbor = stage.neighbor(sprite, direction);
 
-        case Direction.DOWN:
-            neighbor = {
-                row: stage.rowAfter(row),
-                col
-            };
-            break;
-
-        case Direction.LEFT:
-            neighbor = {
-                row,
-                col: stage.colBefore(col)
-            };
-            break;
-
-        case Direction.RIGHT:
-            neighbor = {
-                row,
-                col: stage.colAfter(col)
-            };
-            break;
+    if (stage.isWall(neighbor)) {
+        return false;
     }
 
-    const { mouse } = game;
+    for (const mouse of stage.mice) {
+        if (isSameCoord(mouse, neighbor)) {
+            return false;
+        }
+    }
 
-    const obstacle =
-        stage.isWall(neighbor.row, neighbor.col)
-        || mouse.row === neighbor.row && mouse.col === neighbor.col;
-    return !obstacle;
+    return true;
+}
+
+/**
+ * Gets the index before the given index. Loops around to the end
+ * if the given index is zero.
+ * @param {number} index 
+ * @param {number} length 
+ * @returns 
+ */
+function indexBefore(index, length) {
+    index -= 1;
+    if (index < 0) {
+        index += length;
+    }
+    return index;
+}
+
+/**
+ * Gets the index after the given index. Loops around to the beginning
+ * if the given index is greater than or equal to length.
+ * @param {number} index 
+ * @param {number} length 
+ * @returns 
+ */
+function indexAfter(index, length) {
+    index += 1;
+    if (index >= length) {
+        index = 0;
+    }
+    return index;
 }
 
 /**
  * 
  * @param {Stage} stage 
- * @param {Mouse|Farmer} sprite 
+ * @param {Sprite} sprite 
  * @param {number} direction 
  */
 export function moveSprite(stage, sprite, direction) {
     switch (direction) {
         case Direction.UP:
-            sprite.row -= 1;
-            if (sprite.row < 0) {
-                sprite.row += stage.height;
-            }
+            sprite.row = indexBefore(sprite.row, stage.height);
             break;
         case Direction.DOWN:
-            sprite.row += 1;
-            if (sprite.row >= stage.height) {
-                sprite.row = 0;
-            }
+            sprite.row = indexAfter(sprite.row, stage.height);
             break;
         case Direction.LEFT:
-            sprite.col -= 1;
-            if (sprite.col < 0) {
-                sprite.col += stage.width;
-            }
+            sprite.col = indexBefore(sprite.col, stage.width);
             break;
         case Direction.RIGHT:
-            sprite.col += 1;
-            if (sprite.col >= stage.width) {
-                sprite.col = 0;
-            }
+            sprite.col = indexAfter(sprite.col, stage.width);
             break;
     }
 }
@@ -157,7 +207,10 @@ export function moveSprite(stage, sprite, direction) {
  * @param {Game} game
  */
 export function updateStage(stage, game) {
-
+    updateSprite(stage.farmer, game);
+    for (const mouse of stage.mice) {
+        updateSprite(mouse, game);
+    }
 }
 
 /**
@@ -186,4 +239,9 @@ export function renderStage(context, stage, game) {
     }
 
     context.restore();
+    
+    for (const mouse of stage.mice) {
+        renderSprite(context, mouse, game);
+    }
+    renderSprite(context, stage.farmer, game);
 }
