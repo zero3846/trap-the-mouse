@@ -39,8 +39,8 @@ function initContext(canvas) {
  * @param {Game} game 
  */
 export function updateGame(game) {
-    updateStage(game.mouse, game.cellSize);
-    updateMouse(game.mouse, game.cellSize);
+    updateStage(game.mouse, game);
+    updateMouse(game.mouse, game);
 }
 
 /**
@@ -58,7 +58,7 @@ export function renderGame(game) {
     context.clearRect(0, 0, bw, bh);
 
     context.save();
-    renderStage(context, game.stage, game.cellSize);
-    renderMouse(context, game.mouse, game.cellSize);
+    renderStage(context, game.stage, game);
+    renderMouse(context, game.mouse, game);
     context.restore();
 }

@@ -1,3 +1,5 @@
+import { Game } from "./game.js";
+
 const FLOOR = 0;
 const WALL = 1;
 
@@ -48,20 +50,22 @@ export class Stage {
 /**
  * 
  * @param {Stage} stage 
- * @param {number} cellSize
+ * @param {Game} game
  */
-export function updateStage(stage, cellSize) {
-    
+export function updateStage(stage, game) {
+
 }
 
 /**
  * 
  * @param {CanvasRenderingContext2D} context 
  * @param {Stage} stage 
- * @param {number} cellSize 
+ * @param {Game} game 
  */
-export function renderStage(context, stage, cellSize) {
+export function renderStage(context, stage, game) {
     context.save();
+
+    const { cellSize } = game;
 
     // Render the whole floor.
     context.fillStyle = stage.floorColor;

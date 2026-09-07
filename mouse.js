@@ -1,3 +1,5 @@
+import { Game } from "./game.js";
+
 export class Mouse {
     constructor() {
         this.row = 1;
@@ -10,12 +12,13 @@ export class Mouse {
 /**
  * 
  * @param {Mouse} mouse 
- * @param {number} cellSize
+ * @param {Game} game
  */
-export function updateMouse(mouse, cellSize) {
+export function updateMouse(mouse, game) {
     // The cell size is necessary here, as the game may either be
     // in a transition state (mouse is moving) or ready state (mouse
     // ready to make next move).
+    const { cellSize } = game;
     mouse.x = mouse.col * cellSize + cellSize / 2;
     mouse.y = mouse.row * cellSize + cellSize / 2;
 }
@@ -24,11 +27,12 @@ export function updateMouse(mouse, cellSize) {
  * 
  * @param {CanvasRenderingContext2D} context
  * @param {Mouse} mouse
- * @param {number} cellSize
+ * @param {Game} game
  */
-export function renderMouse(context, mouse, cellSize) {
+export function renderMouse(context, mouse, game) {
     context.save();
 
+    const { cellSize } = game;
     const diameter = cellSize * 0.8;
     const radius = diameter / 2;
 
