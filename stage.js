@@ -41,6 +41,7 @@ export class Stage {
         this.grid = new Array(this.width * this.height);
         this.floorColor = "#edd08c";
         this.wallColor = "#8cceed";
+        this.borderColor = "#bb1826";
 
         this.mice = [];
         this.farmer = new Sprite("farmer");
@@ -98,28 +99,38 @@ export class Stage {
     /**
      * 
      * @param {StageCoord} c 
+     * @returns 
+     */
+    isBorder(c) {
+        return c.row < 0 || c.row >= this.height ||
+            c.col < 0 || c.col >= this.width;
+    }
+
+    /**
+     * 
+     * @param {StageCoord} c 
      * @param {number} direction 
      */
     neighbor(c, direction) {
         switch (direction) {
             case Direction.UP: return {
-                row: indexBefore(c.row, this.height),
+                row: c.row - 1,
                 col: c.col
             };
 
             case Direction.DOWN: return {
-                row: indexAfter(c.row, this.height),
+                row: c.row + 1,
                 col: c.col
             };
 
             case Direction.LEFT: return {
                 row: c.row,
-                col: indexBefore(c.col, this.width)
+                col: c.col - 1
             };
 
             case Direction.RIGHT: return {
                 row: c.row,
-                col: indexAfter(c.col, this.width)
+                col: c.col + 1
             };
         }
         throw new Error("Invalid direction: " + direction);
@@ -139,6 +150,10 @@ export function isMoveAllowed(stage, sprite, direction) {
         return false;
     }
 
+    if (stage.isBorder(neighbor)) {
+        return false;
+    }
+
     for (const mouse of stage.mice) {
         if (isSameCoord(mouse, neighbor)) {
             return false;
@@ -146,36 +161,6 @@ export function isMoveAllowed(stage, sprite, direction) {
     }
 
     return true;
-}
-
-/**
- * Gets the index before the given index. Loops around to the end
- * if the given index is zero.
- * @param {number} index 
- * @param {number} length 
- * @returns 
- */
-function indexBefore(index, length) {
-    index -= 1;
-    if (index < 0) {
-        index += length;
-    }
-    return index;
-}
-
-/**
- * Gets the index after the given index. Loops around to the beginning
- * if the given index is greater than or equal to length.
- * @param {number} index 
- * @param {number} length 
- * @returns 
- */
-function indexAfter(index, length) {
-    index += 1;
-    if (index >= length) {
-        index = 0;
-    }
-    return index;
 }
 
 /**
@@ -187,16 +172,16 @@ function indexAfter(index, length) {
 export function moveSprite(stage, sprite, direction) {
     switch (direction) {
         case Direction.UP:
-            sprite.row = indexBefore(sprite.row, stage.height);
+            sprite.row -= 1;
             break;
         case Direction.DOWN:
-            sprite.row = indexAfter(sprite.row, stage.height);
+            sprite.row += 1;
             break;
         case Direction.LEFT:
-            sprite.col = indexBefore(sprite.col, stage.width);
+            sprite.col -= 1;
             break;
         case Direction.RIGHT:
-            sprite.col = indexAfter(sprite.col, stage.width);
+            sprite.col += 1;
             break;
     }
 }
@@ -237,6 +222,11 @@ export function renderStage(context, stage, game) {
             }
         }
     }
+
+    // Render the border wall
+    context.strokeStyle = stage.borderColor;
+    context.lineWidth = 5;
+    context.strokeRect(0, 0, cellSize * stage.width, cellSize * stage.height);
 
     context.restore();
     
