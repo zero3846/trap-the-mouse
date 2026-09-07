@@ -13,10 +13,9 @@ export class Game {
         this.context = initContext(canvas);
 
         this.stage = getStage(0);
-        this.cellSize = Math.floor(canvas.width / this.stage.width);
-
-        canvas.width = this.cellSize * this.stage.width;
-        canvas.height = this.cellSize * this.stage.height;
+        this.cellSize = 20;
+        this.stagePixelWidth = this.cellSize * this.stage.width;
+        this.stagePixelHeight = this.cellSize * this.stage.height;
     }
 }
 
@@ -79,7 +78,12 @@ export function updateGame(game) {
  * @param {Game} game 
  */
 export function renderGame(game) {
-    const { canvas, context } = game;
+    const {
+        canvas,
+        context,
+        stagePixelWidth: sw,
+        stagePixelHeight: sh
+    } = game;
     const {
         width: bw,
         height: bh
@@ -89,6 +93,12 @@ export function renderGame(game) {
     context.clearRect(0, 0, bw, bh);
 
     context.save();
+    context.translate(
+        (bw - sw) / 2,
+        (bh - sh) / 2
+    );
+
     renderStage(context, game.stage, game);
+
     context.restore();
 }
