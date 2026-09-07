@@ -1,7 +1,6 @@
 import { getActionPlan } from "./actions.js";
-import { Direction } from "./directions.js";
 import { getStage } from "./stage-layouts.js";
-import { renderStage, updateStage } from "./stage.js";
+import { Direction, renderStage, updateStage } from "./stage.js";
 
 export class Game {
     /**

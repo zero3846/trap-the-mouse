@@ -1,4 +1,3 @@
-import { Direction } from "./directions.js";
 import { Game } from "./game.js";
 
 const spriteColors = new Map();

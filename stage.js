@@ -1,9 +1,27 @@
-import { Direction } from "./directions.js";
 import { Game } from "./game.js";
 import { Sprite, renderSprite, updateSprite } from "./sprite.js";
 
-const FLOOR = 0;
-const WALL = 1;
+export const Direction = {
+    UP: 0,
+    DOWN: 1,
+    LEFT: 2,
+    RIGHT: 3
+}
+
+const CellValue = {
+    NOTHING:        0b00,
+    HAS_TOP_WALL:   0b01,
+    HAS_LEFT_WALL:  0b10,
+};
+
+const Mark = {
+    WALL_ROW: ">",
+    WALL_COL: "V",
+    TOP_WALL: "-",
+    LEFT_WALL: "|",
+    FARMER: "F",
+    MOUSE: "M",
+};
 
 /**
  * @typedef StageCoord
@@ -36,32 +54,57 @@ export class Stage {
      * @param {string[]} layout 
      */
     constructor(layout) {
-        this.width = layout[0].length;
-        this.height = layout.length;
-        this.grid = new Array(this.width * this.height);
+        this.width = layout[0].replaceAll(Mark.WALL_COL, "").length;
+        this.height = layout.slice(1).filter(line => !line.startsWith(Mark.WALL_ROW)).length;
+
+        this.grid = new Array(this.width * this.height).fill(CellValue.NOTHING);
         this.floorColor = "#edd08c";
         this.wallColor = "#8cceed";
+        this.borderColor = "#bb1826";
 
         this.mice = [];
         this.farmer = new Sprite("farmer");
 
-        for (let i = 0; i < this.height; ++i) {
-            for (let j = 0; j < this.width; ++j) {
-                const cell = layout[i].charAt(j);
+        let row = 0;
+        for (let i = 1; i < layout.length; ++i) {
+            const wallRow = layout[i].charAt(0) === Mark.WALL_ROW;
+            
+            let col = 0;
+            for (let j = 1; j < layout[0].length; ++j) {
+                const wallCol = layout[0].charAt(j) === Mark.WALL_COL;
 
-                if (cell === "F") {
-                    this.farmer.row = i;
-                    this.farmer.col = j;
-                } else if (cell === "M") {
-                    const mouse = new Sprite("mouse");
-                    mouse.row = i;
-                    mouse.col = j;
-                    this.mice.push(mouse);
-                } else if (cell === "#") {
-                    this.setCell(i, j, WALL);
+                const mark = layout[i].charAt(j);
+                if (wallRow || wallCol) {
+                    let cell = this.cell(row, col);
+
+                    if (wallRow && mark === Mark.TOP_WALL) {
+                        cell |= CellValue.HAS_TOP_WALL;
+                    }
+
+                    if (wallCol && mark === Mark.LEFT_WALL) {
+                        cell |= CellValue.HAS_LEFT_WALL;
+                    }
+
+                    this.setCell(row, col, cell);
                 } else {
-                    this.setCell(i, j, FLOOR);
+                    if (mark === Mark.FARMER) {
+                        this.farmer.row = row;
+                        this.farmer.col = col;
+                    } else if (mark === Mark.MOUSE) {
+                        const mouse = new Sprite("mouse");
+                        mouse.row = row;
+                        mouse.col = col;
+                        this.mice.push(mouse);
+                    }
                 }
+
+                if (!wallCol) {
+                    col++;
+                }
+            }
+
+            if (!wallRow) {
+                row++;
             }
         }
     }
@@ -88,11 +131,30 @@ export class Stage {
 
     /**
      * 
-     * @param {StageCoord} c
+     * @param {StageCoord} c 
      * @returns 
      */
-    isWall(c) {
-        return this.cell(c.row, c.col) === WALL;
+    isBoundary(c) {
+        return c.row < 0 || c.row >= this.height ||
+            c.col < 0 || c.col >= this.width;
+    }
+
+    /**
+     * 
+     * @param {StageCoord} c 
+     * @returns 
+     */
+    hasTopWall(c) {
+        return (this.cell(c.row, c.col) & CellValue.HAS_TOP_WALL) === CellValue.HAS_TOP_WALL;
+    }
+
+    /**
+     * 
+     * @param {StageCoord} c 
+     * @returns 
+     */
+    hasLeftWall(c) {
+        return (this.cell(c.row, c.col) & CellValue.HAS_LEFT_WALL) === CellValue.HAS_LEFT_WALL;
     }
 
     /**
@@ -103,23 +165,23 @@ export class Stage {
     neighbor(c, direction) {
         switch (direction) {
             case Direction.UP: return {
-                row: indexBefore(c.row, this.height),
+                row: c.row - 1,
                 col: c.col
             };
 
             case Direction.DOWN: return {
-                row: indexAfter(c.row, this.height),
+                row: c.row + 1,
                 col: c.col
             };
 
             case Direction.LEFT: return {
                 row: c.row,
-                col: indexBefore(c.col, this.width)
+                col: c.col - 1
             };
 
             case Direction.RIGHT: return {
                 row: c.row,
-                col: indexAfter(c.col, this.width)
+                col: c.col + 1
             };
         }
         throw new Error("Invalid direction: " + direction);
@@ -135,7 +197,23 @@ export class Stage {
 export function isMoveAllowed(stage, sprite, direction) {
     const neighbor = stage.neighbor(sprite, direction);
 
-    if (stage.isWall(neighbor)) {
+    if (stage.isBoundary(neighbor)) {
+        return false;
+    }
+    
+    if (direction === Direction.UP && stage.hasTopWall(sprite)) {
+        return false;
+    }
+    
+    if (direction === Direction.DOWN && stage.hasTopWall(neighbor)) {
+        return false;
+    }
+    
+    if (direction === Direction.LEFT && stage.hasLeftWall(sprite)) {
+        return false;
+    }
+    
+    if (direction === Direction.RIGHT && stage.hasLeftWall(neighbor)) {
         return false;
     }
 
@@ -149,36 +227,6 @@ export function isMoveAllowed(stage, sprite, direction) {
 }
 
 /**
- * Gets the index before the given index. Loops around to the end
- * if the given index is zero.
- * @param {number} index 
- * @param {number} length 
- * @returns 
- */
-function indexBefore(index, length) {
-    index -= 1;
-    if (index < 0) {
-        index += length;
-    }
-    return index;
-}
-
-/**
- * Gets the index after the given index. Loops around to the beginning
- * if the given index is greater than or equal to length.
- * @param {number} index 
- * @param {number} length 
- * @returns 
- */
-function indexAfter(index, length) {
-    index += 1;
-    if (index >= length) {
-        index = 0;
-    }
-    return index;
-}
-
-/**
  * 
  * @param {Stage} stage 
  * @param {Sprite} sprite 
@@ -187,16 +235,16 @@ function indexAfter(index, length) {
 export function moveSprite(stage, sprite, direction) {
     switch (direction) {
         case Direction.UP:
-            sprite.row = indexBefore(sprite.row, stage.height);
+            sprite.row -= 1;
             break;
         case Direction.DOWN:
-            sprite.row = indexAfter(sprite.row, stage.height);
+            sprite.row += 1;
             break;
         case Direction.LEFT:
-            sprite.col = indexBefore(sprite.col, stage.width);
+            sprite.col -= 1;
             break;
         case Direction.RIGHT:
-            sprite.col = indexAfter(sprite.col, stage.width);
+            sprite.col += 1;
             break;
     }
 }
@@ -228,12 +276,33 @@ export function renderStage(context, stage, game) {
     context.fillStyle = stage.floorColor;
     context.fillRect(0, 0, cellSize * stage.width, cellSize * stage.height);
 
+    context.strokeStyle = stage.borderColor;
+    context.lineWidth = 3;
+    context.strokeRect(0, 0, cellSize * stage.width, cellSize * stage.height);
+
     // Selectively render the walls
     for (let row = 0; row < stage.height; ++row) {
         for (let col = 0; col < stage.width; ++col) {
-            if (stage.cell(row, col) === WALL) {
-                context.fillStyle = stage.wallColor;
-                context.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+            const coord = { row, col };
+            const topWall = stage.hasTopWall(coord);
+            const leftWall = stage.hasLeftWall(coord);
+
+            if (topWall && leftWall) {
+                context.beginPath();
+                context.moveTo((col + 0) * cellSize, (row + 1) * cellSize);
+                context.lineTo((col + 0) * cellSize, (row + 0) * cellSize);
+                context.lineTo((col + 1) * cellSize, (row + 0) * cellSize);
+                context.stroke();
+            } else if (topWall) {
+                context.beginPath();
+                context.moveTo((col + 0) * cellSize, (row + 0) * cellSize);
+                context.lineTo((col + 1) * cellSize, (row + 0) * cellSize);
+                context.stroke();
+            } else if (leftWall) {
+                context.beginPath();
+                context.moveTo((col + 0) * cellSize, (row + 1) * cellSize);
+                context.lineTo((col + 0) * cellSize, (row + 0) * cellSize);
+                context.stroke();
             }
         }
     }
