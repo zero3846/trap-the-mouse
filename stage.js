@@ -21,6 +21,7 @@ const Mark = {
     LEFT_WALL: "|",
     FARMER: "F",
     MOUSE: "M",
+    CHEESE: "C",
 };
 
 /**
@@ -64,6 +65,7 @@ export class Stage {
 
         this.mice = [];
         this.farmer = new Sprite("farmer");
+        this.cheese = new Sprite("cheese");
 
         let row = 0;
         for (let i = 1; i < layout.length; ++i) {
@@ -95,6 +97,9 @@ export class Stage {
                         mouse.row = row;
                         mouse.col = col;
                         this.mice.push(mouse);
+                    } else if (mark === Mark.CHEESE) {
+                        this.cheese.row = row;
+                        this.cheese.col = col;
                     }
                 }
 
@@ -223,6 +228,10 @@ export function isMoveAllowed(stage, sprite, direction) {
         }
     }
 
+    if (isSameCoord(stage.cheese, neighbor)) {
+        return false;
+    }
+
     return true;
 }
 
@@ -256,6 +265,7 @@ export function moveSprite(stage, sprite, direction) {
  */
 export function updateStage(stage, game) {
     updateSprite(stage.farmer, game);
+    updateSprite(stage.cheese, game);
     for (const mouse of stage.mice) {
         updateSprite(mouse, game);
     }
@@ -309,8 +319,9 @@ export function renderStage(context, stage, game) {
 
     context.restore();
     
+    renderSprite(context, stage.farmer, game);
+    renderSprite(context, stage.cheese, game);
     for (const mouse of stage.mice) {
         renderSprite(context, mouse, game);
     }
-    renderSprite(context, stage.farmer, game);
 }

@@ -3,6 +3,7 @@ import { Game } from "./game.js";
 const spriteColors = new Map();
 spriteColors.set("mouse", "gray");
 spriteColors.set("farmer", "blue");
+spriteColors.set("cheese", "yellow");
 
 export class Sprite {
     constructor(type) {
@@ -47,6 +48,8 @@ export function renderSprite(context, sprite, game) {
         context.drawImage(game.mouseImage, 0, 0, cellSize, cellSize);
     } else if (sprite.type === "farmer" && game.imagesLoaded.has("farmer")) {
         context.drawImage(game.farmerImage, 0, 0, cellSize, cellSize);
+    } else if (sprite.type === "cheese" && game.imagesLoaded.has("cheese")) {
+        context.drawImage(game.cheeseImage, 0, 0, cellSize, cellSize);
     } else {
         context.translate(cellSize / 2, cellSize / 2);
 

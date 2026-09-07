@@ -24,6 +24,10 @@ export class Game {
         this.farmerImage = new Image();
         this.farmerImage.onload = () => { this.imagesLoaded.add("farmer"); };
         this.farmerImage.src = "farmer.png";
+
+        this.cheeseImage = new Image();
+        this.cheeseImage.onload = () => { this.imagesLoaded.add("cheese"); };
+        this.cheeseImage.src = "cheese.png";
     }
 }
 
