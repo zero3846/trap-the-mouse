@@ -54,7 +54,7 @@ export class Stage {
      * @param {string[]} layout 
      */
     constructor(layout) {
-        this.width = layout[0].replaceAll(Mark.WALL_COL, "").length;
+        this.width = layout[0].replaceAll(Mark.WALL_COL, "").length - 1;
         this.height = layout.slice(1).filter(line => !line.startsWith(Mark.WALL_ROW)).length;
 
         this.grid = new Array(this.width * this.height).fill(CellValue.NOTHING);
