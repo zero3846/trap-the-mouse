@@ -24,8 +24,8 @@ export function updateSprite(sprite, game) {
     // in a transition state (mouse is moving) or ready state (mouse
     // ready to make next move).
     const { cellSize } = game;
-    sprite.x = sprite.col * cellSize + cellSize / 2;
-    sprite.y = sprite.row * cellSize + cellSize / 2;
+    sprite.x = sprite.col * cellSize;
+    sprite.y = sprite.row * cellSize;
 }
 
 /**
@@ -38,16 +38,24 @@ export function renderSprite(context, sprite, game) {
     context.save();
 
     const { cellSize } = game;
-    const diameter = cellSize * 0.8;
+    const diameter = cellSize * 0.9;
     const radius = diameter / 2;
 
     context.translate(sprite.x, sprite.y);
 
-    context.beginPath();
-    context.ellipse(0, 0, radius, radius, 0, 0, 2 * Math.PI);
+    if (sprite.type === "mouse" && game.imagesLoaded.has("mouse")) {
+        context.drawImage(game.mouseImage, 0, 0, cellSize, cellSize);
+    } else if (sprite.type === "farmer" && game.imagesLoaded.has("farmer")) {
+        context.drawImage(game.farmerImage, 0, 0, cellSize, cellSize);
+    } else {
+        context.translate(cellSize / 2, cellSize / 2);
 
-    context.fillStyle = spriteColors.get(sprite.type);
-    context.fill();
+        context.beginPath();
+        context.ellipse(0, 0, radius, radius, 0, 0, 2 * Math.PI);
+
+        context.fillStyle = spriteColors.get(sprite.type);
+        context.fill();
+    }
 
     context.restore();
 }
