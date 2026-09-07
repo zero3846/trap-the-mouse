@@ -1,9 +1,9 @@
 class Mouse {
     constructor() {
-        this.x = 0;
-        this.y = 0;
-        this.vx = 1;
-        this.vy = 1;
+        this.x = 10;
+        this.y = 10;
+        this.vx = 0;
+        this.vy = 0;
     }
 }
 
@@ -39,16 +39,13 @@ function main() {
  * @param {HTMLCanvasElement} canvas 
  */
 function initContext(canvas) {
-    const context = canvas.getContext("2d");
-    const {
-        width: bw,
-        height: bh
-    } = canvas.getBoundingClientRect();
-    const {
-        width: cw,
-        height: ch
-    } = context.canvas;
-    context.scale(cw / bw, ch / bh);
+    const context = canvas.getContext("2d", {
+        alpha: false
+    });
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = canvas.clientWidth * dpr;
+    canvas.height = canvas.clientHeight * dpr;
+    context.scale(dpr, dpr);
     return context;
 }
 

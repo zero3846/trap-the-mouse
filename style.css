@@ -19,4 +19,6 @@ body {
     aspect-ratio: 4 / 3;
     width: min(80%, 1024px);
     height: auto;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
 }
