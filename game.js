@@ -1,3 +1,4 @@
+import { Farmer, renderFarmer, updateFarmer } from "./farmer.js";
 import { Mouse, renderMouse, updateMouse } from "./mouse.js";
 import { renderStage, Stage, updateStage } from "./stage.js";
 
@@ -10,12 +11,19 @@ export class Game {
         this.canvas = canvas;
         this.context = initContext(canvas);
 
-        this.mouse = new Mouse();
         this.stage = new Stage(48);
         this.cellSize = Math.floor(canvas.width / this.stage.width);
 
         canvas.width = this.cellSize * this.stage.width;
         canvas.height = this.cellSize * this.stage.height;
+
+        this.mouse = new Mouse();
+        this.mouse.row = 1;
+        this.mouse.col = 1;
+
+        this.farmer = new Farmer();
+        this.farmer.row = this.stage.height - 2;
+        this.farmer.col = this.stage.width - 2;
     }
 }
 
@@ -40,6 +48,7 @@ function initContext(canvas) {
  */
 export function updateGame(game) {
     updateStage(game.mouse, game);
+    updateFarmer(game.farmer, game);
     updateMouse(game.mouse, game);
 }
 
@@ -59,6 +68,7 @@ export function renderGame(game) {
 
     context.save();
     renderStage(context, game.stage, game);
+    renderFarmer(context, game.farmer, game);
     renderMouse(context, game.mouse, game);
     context.restore();
 }
