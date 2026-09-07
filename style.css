@@ -17,6 +17,8 @@ body {
 #main {
     background-color: black;
     aspect-ratio: 4 / 3;
-    width: 80%;
+    width: 800px;
     height: auto;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
 }
