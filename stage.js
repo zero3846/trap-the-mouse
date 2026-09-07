@@ -1,5 +1,7 @@
 import { Direction } from "./directions.js";
+import { Farmer, renderFarmer, updateFarmer } from "./farmer.js";
 import { Game } from "./game.js";
+import { Mouse, renderMouse, updateMouse } from "./mouse.js";
 
 const FLOOR = 0;
 const WALL = 1;
@@ -12,13 +14,30 @@ export class Stage {
     constructor(layout) {
         this.width = layout[0].length;
         this.height = layout.length;
-        this.grid = new Array(this.width * this.height).fill(FLOOR);
+        this.grid = new Array(this.width * this.height);
         this.floorColor = "#edd08c";
         this.wallColor = "#8cceed";
 
+        this.mice = [];
+        this.farmer = new Farmer();
+
         for (let i = 0; i < this.height; ++i) {
             for (let j = 0; j < this.width; ++j) {
-                this.setCell(i, j, layout[i].charAt(j) === "#" ? WALL : FLOOR);
+                const cell = layout[i].charAt(j);
+
+                if (cell === "F") {
+                    this.farmer.row = i;
+                    this.farmer.col = j;
+                } else if (cell === "M") {
+                    const mouse = new Mouse();
+                    mouse.row = i;
+                    mouse.col = j;
+                    this.mice.push(mouse);
+                } else if (cell === "#") {
+                    this.setCell(i, j, WALL);
+                } else {
+                    this.setCell(i, j, FLOOR);
+                }
             }
         }
     }
@@ -67,12 +86,12 @@ export class Stage {
 /**
  * 
  * @param {Stage} stage 
- * @param {number} row 
- * @param {number} col 
+ * @param {Farmer|Mouse} sprite
  * @param {number} direction 
- * @param {Game} game 
  */
-export function isDirectionAllowed(stage, row, col, direction, game) {
+export function isMoveAllowed(stage, sprite, direction) {
+    const { row, col } = sprite;
+
     let neighbor;
     switch (direction) {
         case Direction.UP:
@@ -104,12 +123,17 @@ export function isDirectionAllowed(stage, row, col, direction, game) {
             break;
     }
 
-    const { mouse } = game;
+    if (stage.isWall(neighbor.row, neighbor.col)) {
+        return false;
+    }
 
-    const obstacle =
-        stage.isWall(neighbor.row, neighbor.col)
-        || mouse.row === neighbor.row && mouse.col === neighbor.col;
-    return !obstacle;
+    for (const mouse of stage.mice) {
+        if (mouse.row === neighbor.row && mouse.col === neighbor.col) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 /**
@@ -153,7 +177,10 @@ export function moveSprite(stage, sprite, direction) {
  * @param {Game} game
  */
 export function updateStage(stage, game) {
-
+    updateFarmer(stage.farmer, game);
+    for (const mouse of stage.mice) {
+        updateMouse(mouse, game);
+    }
 }
 
 /**
@@ -182,4 +209,9 @@ export function renderStage(context, stage, game) {
     }
 
     context.restore();
+    
+    for (const mouse of stage.mice) {
+        renderMouse(context, mouse, game);
+    }
+    renderFarmer(context, stage.farmer, game);
 }

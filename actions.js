@@ -1,4 +1,4 @@
-import { isDirectionAllowed, moveSprite } from "./stage.js";
+import { isMoveAllowed, moveSprite } from "./stage.js";
 
 export class Action {
     constructor(method, args) {
@@ -12,10 +12,11 @@ export class Action {
 }
 
 export function getActionPlan(game, direction) {
-    const { stage, farmer } = game;
+    const { stage } = game;
+    const { farmer } = stage;
     const actions = [];
 
-    if (isDirectionAllowed(stage, farmer.row, farmer.col, direction, game)) {
+    if (isMoveAllowed(stage, farmer, direction)) {
         actions.push(new Action(moveSprite, [ stage, farmer, direction ]));
     }
 

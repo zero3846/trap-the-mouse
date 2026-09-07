@@ -1,9 +1,7 @@
 import { getActionPlan } from "./actions.js";
 import { Direction } from "./directions.js";
-import { Farmer, renderFarmer, updateFarmer } from "./farmer.js";
-import { Mouse, renderMouse, updateMouse } from "./mouse.js";
 import { getStage } from "./stage-layouts.js";
-import { renderStage, Stage, updateStage } from "./stage.js";
+import { renderStage, updateStage } from "./stage.js";
 
 export class Game {
     /**
@@ -19,14 +17,6 @@ export class Game {
 
         canvas.width = this.cellSize * this.stage.width;
         canvas.height = this.cellSize * this.stage.height;
-
-        this.mouse = new Mouse();
-        this.mouse.row = 1;
-        this.mouse.col = 1;
-
-        this.farmer = new Farmer();
-        this.farmer.row = this.stage.height - 2;
-        this.farmer.col = this.stage.width - 2;
     }
 }
 
@@ -81,9 +71,7 @@ export function setupEventListeners(game) {
  * @param {Game} game 
  */
 export function updateGame(game) {
-    updateStage(game.mouse, game);
-    updateFarmer(game.farmer, game);
-    updateMouse(game.mouse, game);
+    updateStage(game.stage, game);
 }
 
 /**
@@ -102,7 +90,5 @@ export function renderGame(game) {
 
     context.save();
     renderStage(context, game.stage, game);
-    renderFarmer(context, game.farmer, game);
-    renderMouse(context, game.mouse, game);
     context.restore();
 }
