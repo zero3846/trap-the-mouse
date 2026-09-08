@@ -22,6 +22,7 @@ const Mark = {
     FARMER: "F",
     MOUSE: "M",
     CHEESE: "C",
+    MOUSETRAP: "T",
 };
 
 /**
@@ -64,6 +65,7 @@ export class Stage {
         this.borderColor = "#bb1826";
 
         this.mice = [];
+        this.mousetraps = [];
         this.farmer = new Sprite("farmer");
         this.cheese = new Sprite("cheese");
 
@@ -100,6 +102,11 @@ export class Stage {
                     } else if (mark === Mark.CHEESE) {
                         this.cheese.row = row;
                         this.cheese.col = col;
+                    } else if (mark === Mark.MOUSETRAP) {
+                        const mousetrap = new Sprite("mousetrap");
+                        mousetrap.row = row;
+                        mousetrap.col = col;
+                        this.mousetraps.push(mousetrap);
                     }
                 }
 
@@ -269,6 +276,9 @@ export function updateStage(stage, game) {
     for (const mouse of stage.mice) {
         updateSprite(mouse, game);
     }
+    for (const mousetrap of stage.mousetraps) {
+        updateSprite(mousetrap, game);
+    }
 }
 
 /**
@@ -319,6 +329,10 @@ export function renderStage(context, stage, game) {
 
     context.restore();
     
+    for (const mousetrap of stage.mousetraps) {
+        renderSprite(context, mousetrap, game);
+    }
+    renderSprite(context, stage.cheese, game);
     renderSprite(context, stage.farmer, game);
     renderSprite(context, stage.cheese, game);
     for (const mouse of stage.mice) {

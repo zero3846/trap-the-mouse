@@ -4,10 +4,12 @@ const spriteColors = new Map();
 spriteColors.set("mouse", "gray");
 spriteColors.set("farmer", "blue");
 spriteColors.set("cheese", "yellow");
+spriteColors.set("mousetrap", "red");
 
 export class Sprite {
     constructor(type) {
         this.type = type;
+        this.state = type === "mousetrap" ? "set" : undefined;
         this.row = 0;
         this.col = 0;
         this.x = 0;
@@ -44,21 +46,38 @@ export function renderSprite(context, sprite, game) {
 
     context.translate(sprite.x, sprite.y);
 
-    if (sprite.type === "mouse" && game.imagesLoaded.has("mouse")) {
-        context.drawImage(game.mouseImage, 0, 0, cellSize, cellSize);
-    } else if (sprite.type === "farmer" && game.imagesLoaded.has("farmer")) {
-        context.drawImage(game.farmerImage, 0, 0, cellSize, cellSize);
-    } else if (sprite.type === "cheese" && game.imagesLoaded.has("cheese")) {
-        context.drawImage(game.cheeseImage, 0, 0, cellSize, cellSize);
-    } else {
-        context.translate(cellSize / 2, cellSize / 2);
+    do {
+        if (sprite.type === "mousetrap") {
+            let image = game.loadedImages.get("mousetrap_base");
+            if (image == null) {
+                break;
+            }
+            context.drawImage(image, 0, 0, cellSize, cellSize);
 
-        context.beginPath();
-        context.ellipse(0, 0, radius, radius, 0, 0, 2 * Math.PI);
+            if (sprite.state === "set") {
+                image = game.loadedImages.get("mousetrap_set");
+                if (image == null) {
+                    break;
+                }
+                context.drawImage(image, 0, 0, cellSize, cellSize);
+            } else if (sprite.state === "triggered") {
+                image = game.loadedImages.get("mousetrap_whack");
+                if (image == null) {
+                    break;
+                }
+                context.drawImage(image, 0, 0, cellSize, cellSize);
 
-        context.fillStyle = spriteColors.get(sprite.type);
-        context.fill();
-    }
+                image = game.loadedImages.get("mousetrap_swing");
+                if (image == null) {
+                    break;
+                }
+                context.drawImage(image, 0, 0, cellSize, cellSize);
+            }
+        } else if (game.loadedImages.has(sprite.type)) {
+            const image = game.loadedImages.get(sprite.type);
+            context.drawImage(image, 0, 0, cellSize, cellSize);
+        }
+    } while (false);
 
     context.restore();
 }
