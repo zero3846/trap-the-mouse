@@ -16,14 +16,23 @@ export class Game {
         this.stagePixelWidth = this.cellSize * this.stage.width;
         this.stagePixelHeight = this.cellSize * this.stage.height;
 
-        this.imagesLoaded = new Set();
-        this.mouseImage = new Image();
-        this.mouseImage.onload = () => { this.imagesLoaded.add("mouse"); };
-        this.mouseImage.src = "mouse.png";
+        this.loadedImages = new Map();
 
-        this.farmerImage = new Image();
-        this.farmerImage.onload = () => { this.imagesLoaded.add("farmer"); };
-        this.farmerImage.src = "farmer.png";
+        const imageNames = [
+            "mouse",
+            "farmer",
+            "cheese",
+            "mousetrap_base",
+            "mousetrap_set",
+            "mousetrap_swing",
+            "mousetrap_whack"
+        ];
+
+        for (const imageName of imageNames) {
+            const image = new Image();
+            image.onload = () => { this.loadedImages.set(imageName, image); };
+            image.src = imageName + ".png";
+        }
     }
 }
 

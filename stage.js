@@ -21,6 +21,8 @@ const Mark = {
     LEFT_WALL: "|",
     FARMER: "F",
     MOUSE: "M",
+    CHEESE: "C",
+    MOUSETRAP: "T",
 };
 
 /**
@@ -54,7 +56,7 @@ export class Stage {
      * @param {string[]} layout 
      */
     constructor(layout) {
-        this.width = layout[0].replaceAll(Mark.WALL_COL, "").length;
+        this.width = layout[0].replaceAll(Mark.WALL_COL, "").length - 1;
         this.height = layout.slice(1).filter(line => !line.startsWith(Mark.WALL_ROW)).length;
 
         this.grid = new Array(this.width * this.height).fill(CellValue.NOTHING);
@@ -63,7 +65,9 @@ export class Stage {
         this.borderColor = "#bb1826";
 
         this.mice = [];
+        this.mousetraps = [];
         this.farmer = new Sprite("farmer");
+        this.cheese = new Sprite("cheese");
 
         let row = 0;
         for (let i = 1; i < layout.length; ++i) {
@@ -95,6 +99,14 @@ export class Stage {
                         mouse.row = row;
                         mouse.col = col;
                         this.mice.push(mouse);
+                    } else if (mark === Mark.CHEESE) {
+                        this.cheese.row = row;
+                        this.cheese.col = col;
+                    } else if (mark === Mark.MOUSETRAP) {
+                        const mousetrap = new Sprite("mousetrap");
+                        mousetrap.row = row;
+                        mousetrap.col = col;
+                        this.mousetraps.push(mousetrap);
                     }
                 }
 
@@ -223,6 +235,10 @@ export function isMoveAllowed(stage, sprite, direction) {
         }
     }
 
+    if (isSameCoord(stage.cheese, neighbor)) {
+        return false;
+    }
+
     return true;
 }
 
@@ -256,8 +272,12 @@ export function moveSprite(stage, sprite, direction) {
  */
 export function updateStage(stage, game) {
     updateSprite(stage.farmer, game);
+    updateSprite(stage.cheese, game);
     for (const mouse of stage.mice) {
         updateSprite(mouse, game);
+    }
+    for (const mousetrap of stage.mousetraps) {
+        updateSprite(mousetrap, game);
     }
 }
 
@@ -309,8 +329,13 @@ export function renderStage(context, stage, game) {
 
     context.restore();
     
+    for (const mousetrap of stage.mousetraps) {
+        renderSprite(context, mousetrap, game);
+    }
+    renderSprite(context, stage.cheese, game);
+    renderSprite(context, stage.farmer, game);
+    renderSprite(context, stage.cheese, game);
     for (const mouse of stage.mice) {
         renderSprite(context, mouse, game);
     }
-    renderSprite(context, stage.farmer, game);
 }
