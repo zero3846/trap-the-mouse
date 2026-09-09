@@ -8,6 +8,10 @@ export class Game {
      * @param {HTMLCanvasElement} canvas 
      */
     constructor(canvas) {
+        this.fpsTarget = 5;     // The max frames-per-second
+        this.fpsActual = 0;     // The measured frames-per-second
+        this.elapsedTime = 0;   // Time since last frame
+
         this.canvas = canvas;
         this.context = initContext(canvas);
 
@@ -34,6 +38,42 @@ export class Game {
             image.src = imageName + ".png";
         }
     }
+
+    start() {
+        const renderTimeout_msecs = 1.0 / game.fpsTarget * 1000;
+        const logFPS = false;
+
+        let numFrames = 0;
+        let lastTime = 0
+
+        function animate(currentTime) {
+            const elapsedTime = currentTime - lastTime;
+
+            if (elapsedTime > renderTimeout_msecs) {
+                lastTime = currentTime;
+                numFrames++;
+                game.elapsedTime = elapsedTime;
+
+                updateGame(game);
+                renderGame(game);
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        requestAnimationFrame(animate);
+
+        setupEventListeners(game);
+
+        setInterval(() => {
+            game.fpsActual = numFrames;
+            numFrames = 0;
+
+            if (logFPS) {
+                console.log(game.fpsActual + " FPS");
+            }
+        }, 1000);
+    }
 }
 
 /**
@@ -51,7 +91,7 @@ function initContext(canvas) {
     return context;
 }
 
-export function setupEventListeners(game) {
+function setupEventListeners(game) {
     window.addEventListener('keydown', (e) => {
         let direction;
 
@@ -86,7 +126,7 @@ export function setupEventListeners(game) {
  * 
  * @param {Game} game 
  */
-export function updateGame(game) {
+function updateGame(game) {
     updateStage(game.stage, game);
 }
 
@@ -94,7 +134,7 @@ export function updateGame(game) {
  * 
  * @param {Game} game 
  */
-export function renderGame(game) {
+function renderGame(game) {
     const {
         canvas,
         context,
