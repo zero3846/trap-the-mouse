@@ -1,6 +1,7 @@
 import { getActionPlan } from "./actions.js";
+import { RenderLayer, RenderQueue } from "./render-queue.js";
 import { getStage } from "./stage-layouts.js";
-import { Direction, renderStage, updateStage } from "./stage.js";
+import { Direction, updateStage } from "./stage.js";
 
 export class Game {
     /**
@@ -19,6 +20,8 @@ export class Game {
         this.cellSize = 48;
         this.stagePixelWidth = this.cellSize * this.stage.width;
         this.stagePixelHeight = this.cellSize * this.stage.height;
+
+        this.renderQueue = new RenderQueue();
 
         this.loadedImages = new Map();
 
@@ -40,22 +43,22 @@ export class Game {
     }
 
     start() {
-        const renderTimeout_msecs = 1.0 / game.fpsTarget * 1000;
+        const renderTimeout_msecs = 1.0 / this.fpsTarget * 1000;
         const logFPS = false;
 
         let numFrames = 0;
         let lastTime = 0
 
-        function animate(currentTime) {
+        const animate = (currentTime) => {
             const elapsedTime = currentTime - lastTime;
 
             if (elapsedTime > renderTimeout_msecs) {
                 lastTime = currentTime;
                 numFrames++;
-                game.elapsedTime = elapsedTime;
+                this.elapsedTime = elapsedTime;
 
-                updateGame(game);
-                renderGame(game);
+                updateGame(this);
+                renderGame(this);
             }
 
             requestAnimationFrame(animate);
@@ -63,14 +66,14 @@ export class Game {
 
         requestAnimationFrame(animate);
 
-        setupEventListeners(game);
+        setupEventListeners(this);
 
         setInterval(() => {
-            game.fpsActual = numFrames;
+            this.fpsActual = numFrames;
             numFrames = 0;
 
             if (logFPS) {
-                console.log(game.fpsActual + " FPS");
+                console.log(this.fpsActual + " FPS");
             }
         }, 1000);
     }
@@ -150,12 +153,15 @@ function renderGame(game) {
     context.clearRect(0, 0, bw, bh);
 
     context.save();
+
+    // Center the stage
     context.translate(
         (bw - sw) / 2,
         (bh - sh) / 2
     );
 
-    renderStage(context, game.stage, game);
+    game.renderQueue.renderAll(context);
+    game.renderQueue.clear();
 
     context.restore();
 }

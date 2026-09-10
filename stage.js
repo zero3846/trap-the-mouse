@@ -1,5 +1,6 @@
 import { Game } from "./game.js";
-import { Sprite, renderSprite, updateSprite } from "./sprite.js";
+import { RenderLayer } from "./render-queue.js";
+import { Sprite, updateSprite } from "./sprite.js";
 
 export const Direction = {
     UP: 0,
@@ -279,26 +280,35 @@ export function updateStage(stage, game) {
     for (const mousetrap of stage.mousetraps) {
         updateSprite(mousetrap, game);
     }
-}
-
-/**
- * 
- * @param {CanvasRenderingContext2D} context 
- * @param {Stage} stage 
- * @param {Game} game 
- */
-export function renderStage(context, stage, game) {
-    context.save();
 
     const { cellSize } = game;
 
-    // Render the whole floor.
-    context.fillStyle = stage.floorColor;
-    context.fillRect(0, 0, cellSize * stage.width, cellSize * stage.height);
+    game.renderQueue.pushRender(
+        (context) => renderStageBackground(
+            context,
+            stage.floorColor,
+            stage.width * cellSize,
+            stage.height * cellSize
+        ),
+        RenderLayer.BACKGROUND,
+        `stage background`
+    );
 
-    context.strokeStyle = stage.borderColor;
-    context.lineWidth = 3;
-    context.strokeRect(0, 0, cellSize * stage.width, cellSize * stage.height);
+    game.renderQueue.pushRender(
+        (context) => setWallStyle(context, stage.borderColor),
+        RenderLayer.WALLS,
+        `set wall style`
+    );
+
+    game.renderQueue.pushRender(
+        (context) => renderStageBorder(
+            context,
+            stage.width * cellSize,
+            stage.height * cellSize
+        ),
+        RenderLayer.WALLS,
+        `stage border`
+    );
 
     // Selectively render the walls
     for (let row = 0; row < stage.height; ++row) {
@@ -308,34 +318,98 @@ export function renderStage(context, stage, game) {
             const leftWall = stage.hasLeftWall(coord);
 
             if (topWall && leftWall) {
-                context.beginPath();
-                context.moveTo((col + 0) * cellSize, (row + 1) * cellSize);
-                context.lineTo((col + 0) * cellSize, (row + 0) * cellSize);
-                context.lineTo((col + 1) * cellSize, (row + 0) * cellSize);
-                context.stroke();
+                game.renderQueue.pushRender(
+                    (context) => renderTopLeftWall(context, cellSize, row, col),
+                    RenderLayer.WALLS,
+                    `top-left wall (${row}, ${col})`
+                );
             } else if (topWall) {
-                context.beginPath();
-                context.moveTo((col + 0) * cellSize, (row + 0) * cellSize);
-                context.lineTo((col + 1) * cellSize, (row + 0) * cellSize);
-                context.stroke();
+                game.renderQueue.pushRender(
+                    (context) => renderTopWall(context, cellSize, row, col),
+                    RenderLayer.WALLS,
+                    `top wall (${row}, ${col})`
+                );
             } else if (leftWall) {
-                context.beginPath();
-                context.moveTo((col + 0) * cellSize, (row + 1) * cellSize);
-                context.lineTo((col + 0) * cellSize, (row + 0) * cellSize);
-                context.stroke();
+                game.renderQueue.pushRender(
+                    (context) => renderLeftWall(context, cellSize, row, col),
+                    RenderLayer.WALLS,
+                    `left wall (${row}, ${col})`
+                );
             }
         }
     }
+}
+/**
+ * 
+ * @param {CanvasRenderingContext2D} context 
+ * @param {string} floorColor
+ * @param {number} stageWidth
+ * @param {number} stageHeight
+ */
+function renderStageBackground(context, floorColor, width, height) {
+    context.fillStyle = floorColor;
+    context.fillRect(0, 0, width, height);
+}
 
-    context.restore();
-    
-    for (const mousetrap of stage.mousetraps) {
-        renderSprite(context, mousetrap, game);
-    }
-    renderSprite(context, stage.cheese, game);
-    renderSprite(context, stage.farmer, game);
-    renderSprite(context, stage.cheese, game);
-    for (const mouse of stage.mice) {
-        renderSprite(context, mouse, game);
-    }
+/**
+ * 
+ * @param {CanvasRenderingContext2D} context 
+ * @param {string} wallColor 
+ */
+function setWallStyle(context, wallColor) {
+    context.strokeStyle = wallColor;
+    context.lineWidth = 3;
+}
+
+/**
+ * 
+ * @param {CanvasRenderingContext2D} context 
+ * @param {number} width 
+ * @param {number} height 
+ */
+function renderStageBorder(context, width, height) {
+    context.strokeRect(0, 0, width, height);
+}
+
+/**
+ * 
+ * @param {CanvasRenderingContext2D} context 
+ * @param {number} cellSize 
+ * @param {number} row 
+ * @param {number} col 
+ */
+function renderTopLeftWall(context, cellSize, row, col) {
+    context.beginPath();
+    context.moveTo((col + 0) * cellSize, (row + 1) * cellSize);
+    context.lineTo((col + 0) * cellSize, (row + 0) * cellSize);
+    context.lineTo((col + 1) * cellSize, (row + 0) * cellSize);
+    context.stroke();
+}
+
+/**
+ * 
+ * @param {CanvasRenderingContext2D} context 
+ * @param {number} cellSize 
+ * @param {number} row 
+ * @param {number} col 
+ */
+function renderTopWall(context, cellSize, row, col) {
+    context.beginPath();
+    context.moveTo((col + 0) * cellSize, (row + 0) * cellSize);
+    context.lineTo((col + 1) * cellSize, (row + 0) * cellSize);
+    context.stroke();
+}
+
+/**
+ * 
+ * @param {CanvasRenderingContext2D} context 
+ * @param {number} cellSize 
+ * @param {number} row 
+ * @param {number} col 
+ */
+function renderLeftWall(context, cellSize, row, col) {
+    context.beginPath();
+    context.moveTo((col + 0) * cellSize, (row + 1) * cellSize);
+    context.lineTo((col + 0) * cellSize, (row + 0) * cellSize);
+    context.stroke();
 }
