@@ -55,10 +55,10 @@ export class Stage {
      * @param {string[]} layout 
      */
     constructor(layout) {
-        this.width = layout[0].replaceAll(Mark.WALL_COL, "").length - 1;
-        this.height = layout.slice(1).filter(line => !line.startsWith(Mark.WALL_ROW)).length;
+        this.numCols = layout[0].replaceAll(Mark.WALL_COL, "").length - 1;
+        this.numRows = layout.slice(1).filter(line => !line.startsWith(Mark.WALL_ROW)).length;
 
-        this.grid = new Array(this.width * this.height).fill(CellValue.NOTHING);
+        this.grid = new Array(this.numCols * this.numRows).fill(CellValue.NOTHING);
 
         this.mice = [];
         this.mousetraps = [];
@@ -124,7 +124,7 @@ export class Stage {
      * @return {number}
      */
     cell(row, col) {
-        return this.grid[row * this.width + col];
+        return this.grid[row * this.numCols + col];
     }
 
     /**
@@ -134,7 +134,7 @@ export class Stage {
      * @param {number} value 
      */
     setCell(row, col, value) {
-        this.grid[row * this.width + col] = value;
+        this.grid[row * this.numCols + col] = value;
     }
 
     /**
@@ -143,8 +143,8 @@ export class Stage {
      * @returns 
      */
     isBoundary(c) {
-        return c.row < 0 || c.row >= this.height ||
-            c.col < 0 || c.col >= this.width;
+        return c.row < 0 || c.row >= this.numRows ||
+            c.col < 0 || c.col >= this.numCols;
     }
 
     /**

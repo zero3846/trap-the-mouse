@@ -12,9 +12,9 @@ export function render(game) {
         cellSize
     } = game;
 
-    const sw = cellSize * stage.width;
-    const sh = cellSize * stage.height;
-    
+    const sw = cellSize * stage.numCols;
+    const sh = cellSize * stage.numRows;
+
     const {
         width: bw,
         height: bh
@@ -53,7 +53,7 @@ function renderBackgroundLayer(context, game) {
 
     // Render floor
     context.fillStyle = floorColor;
-    context.fillRect(0, 0, cellSize * stage.width, cellSize * stage.height);
+    context.fillRect(0, 0, cellSize * stage.numCols, cellSize * stage.numRows);
 }
 
 /**
@@ -70,11 +70,11 @@ function renderLowWallLayer(context, game) {
     context.lineWidth = 3;
 
     // Render the border walls
-    context.strokeRect(0, 0, cellSize * stage.width, cellSize * stage.height);
+    context.strokeRect(0, 0, cellSize * stage.numCols, cellSize * stage.numRows);
 
     // Render the interior walls
-    for (let row = 0; row < stage.height; ++row) {
-        for (let col = 0; col < stage.width; ++col) {
+    for (let row = 0; row < stage.numRows; ++row) {
+        for (let col = 0; col < stage.numCols; ++col) {
             const coord = { row, col };
             const topWall = stage.hasTopWall(coord);
             const leftWall = stage.hasLeftWall(coord);
