@@ -1,0 +1,202 @@
+import { Game } from "./game.js";
+
+/**
+ * 
+ * @param {Game} game 
+ */
+export function render(game) {
+    const {
+        canvas,
+        context,
+        stage,
+        cellSize
+    } = game;
+
+    const sw = cellSize * stage.width;
+    const sh = cellSize * stage.height;
+    
+    const {
+        width: bw,
+        height: bh
+    } = canvas.getBoundingClientRect();
+
+    // Clear the canvas
+    context.clearRect(0, 0, bw, bh);
+
+    context.save();
+
+    // Center the stage
+    context.translate(
+        (bw - sw) / 2,
+        (bh - sh) / 2
+    );
+
+    renderBackgroundLayer(context, game);
+    renderLowWallLayer(context, game);
+    renderLowSpriteLayer(context, game);
+    renderSpriteLayer(context, game);
+    renderHighSpriteLayer(context, game);
+    renderForegroundLayer(context, game);
+
+    context.restore();
+}
+
+/**
+ * 
+ * @param {CanvasRenderingContext2D} context 
+ * @param {Game} game 
+ */
+function renderBackgroundLayer(context, game) {
+    const { cellSize, stage } = game;
+    const floorColor = "#edd08c";
+    const wallColor = "#bb1826";
+
+    // Render floor
+    context.fillStyle = floorColor;
+    context.fillRect(0, 0, cellSize * stage.width, cellSize * stage.height);
+}
+
+/**
+ * 
+ * @param {CanvasRenderingContext2D} context 
+ * @param {Game} game 
+ */
+function renderLowWallLayer(context, game) {
+    const { cellSize, stage } = game;
+    const wallColor = "#bb1826";
+
+    // Prepare for rendering walls
+    context.strokeStyle = wallColor;
+    context.lineWidth = 3;
+
+    // Render the border walls
+    context.strokeRect(0, 0, cellSize * stage.width, cellSize * stage.height);
+
+    // Render the interior walls
+    for (let row = 0; row < stage.height; ++row) {
+        for (let col = 0; col < stage.width; ++col) {
+            const coord = { row, col };
+            const topWall = stage.hasTopWall(coord);
+            const leftWall = stage.hasLeftWall(coord);
+
+            if (topWall && leftWall) {
+                context.beginPath();
+                context.moveTo((col + 0) * cellSize, (row + 1) * cellSize);
+                context.lineTo((col + 0) * cellSize, (row + 0) * cellSize);
+                context.lineTo((col + 1) * cellSize, (row + 0) * cellSize);
+                context.stroke();
+            } else if (topWall) {
+                context.beginPath();
+                context.moveTo((col + 0) * cellSize, (row + 0) * cellSize);
+                context.lineTo((col + 1) * cellSize, (row + 0) * cellSize);
+                context.stroke();
+            } else if (leftWall) {
+                context.beginPath();
+                context.moveTo((col + 0) * cellSize, (row + 1) * cellSize);
+                context.lineTo((col + 0) * cellSize, (row + 0) * cellSize);
+                context.stroke();
+            }
+        }
+    }
+}
+
+/**
+ * 
+ * @param {CanvasRenderingContext2D} context 
+ * @param {Game} game 
+ * @param {Sprite} sprite 
+ * @param {Image[]} images
+ */
+function renderSprite(context, game, sprite, images) {
+    const { cellSize } = game;
+    const x = sprite.col * cellSize;
+    const y = sprite.row * cellSize;
+
+    for (const image of images) {
+        if (image != null) {
+            context.drawImage(image, x, y, cellSize, cellSize);
+        }
+    }
+}
+
+/**
+ * 
+ * @param {CanvasRenderingContext2D} context 
+ * @param {Game} game 
+ */
+function renderLowSpriteLayer(context, game) {
+    const { cellSize, stage } = game;
+    const { mousetraps } = stage;
+
+    const mousetrap_images = [
+        game.loadedImages.get("mousetrap_base")
+    ];
+
+    for (const mousetrap of mousetraps) {
+        renderSprite(context, game, mousetrap, mousetrap_images);
+    }
+}
+
+/**
+ * 
+ * @param {CanvasRenderingContext2D} context 
+ * @param {Game} game 
+ */
+function renderSpriteLayer(context, game) {
+    const { cellSize, stage } = game;
+    const { mice, farmer, cheese } = stage;
+
+    const mouse_images = [
+        game.loadedImages.get("mouse")
+    ];
+    const cheese_images = [
+        game.loadedImages.get("cheese")
+    ];
+    const farmer_images = [
+        game.loadedImages.get("farmer")
+    ];
+
+    for (const mouse of mice) {
+        renderSprite(context, game, mouse, mouse_images);
+    }
+
+    renderSprite(context, game, cheese, cheese_images);
+    renderSprite(context, game, farmer, farmer_images);
+}
+
+/**
+ * 
+ * @param {CanvasRenderingContext2D} context 
+ * @param {Game} game 
+ */
+function renderHighSpriteLayer(context, game) {
+    const { cellSize, stage } = game;
+    const { mousetraps } = stage;
+
+    const mousetrap_set_images = [
+        game.loadedImages.get("mousetrap_set")
+    ];
+
+    const mousetrap_triggered_images = [
+        game.loadedImages.get("mousetrap_whack"),
+        game.loadedImages.get("mousetrap_swing")
+    ];
+
+    for (const mousetrap of mousetraps) {
+        if (mousetrap.state === "set") {
+            renderSprite(context, game, mousetrap, mousetrap_set_images);
+        } else if (mousetrap.state === "triggered") {
+            renderSprite(context, game, mousetrap, mousetrap_triggered_images);
+        }
+    }
+}
+
+/**
+ * 
+ * @param {CanvasRenderingContext2D} context 
+ * @param {Game} game 
+ */
+function renderForegroundLayer(context, game) {
+
+}
+

@@ -1,7 +1,7 @@
 import { getActionPlan } from "./actions.js";
-import { RenderLayer, RenderQueue } from "./render-queue.js";
+import { render } from "./rendering.js";
 import { getStage } from "./stage-layouts.js";
-import { Direction, updateStage } from "./stage.js";
+import { Direction } from "./stage.js";
 
 export class Game {
     /**
@@ -18,10 +18,6 @@ export class Game {
 
         this.stage = getStage(0);
         this.cellSize = 48;
-        this.stagePixelWidth = this.cellSize * this.stage.width;
-        this.stagePixelHeight = this.cellSize * this.stage.height;
-
-        this.renderQueue = new RenderQueue();
 
         this.loadedImages = new Map();
 
@@ -57,8 +53,7 @@ export class Game {
                 numFrames++;
                 this.elapsedTime = elapsedTime;
 
-                updateGame(this);
-                renderGame(this);
+                render(this);
             }
 
             requestAnimationFrame(animate);
@@ -123,45 +118,4 @@ function setupEventListeners(game) {
 
         e.preventDefault();
     });
-}
-
-/**
- * 
- * @param {Game} game 
- */
-function updateGame(game) {
-    updateStage(game.stage, game);
-}
-
-/**
- * 
- * @param {Game} game 
- */
-function renderGame(game) {
-    const {
-        canvas,
-        context,
-        stagePixelWidth: sw,
-        stagePixelHeight: sh
-    } = game;
-    const {
-        width: bw,
-        height: bh
-    } = canvas.getBoundingClientRect();
-
-    // Clear the canvas
-    context.clearRect(0, 0, bw, bh);
-
-    context.save();
-
-    // Center the stage
-    context.translate(
-        (bw - sw) / 2,
-        (bh - sh) / 2
-    );
-
-    game.renderQueue.renderAll(context);
-    game.renderQueue.clear();
-
-    context.restore();
 }

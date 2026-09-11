@@ -1,6 +1,4 @@
-import { Game } from "./game.js";
-import { RenderLayer } from "./render-queue.js";
-import { Sprite, updateSprite } from "./sprite.js";
+import { Sprite } from "./sprite.js";
 
 export const Direction = {
     UP: 0,
@@ -46,10 +44,10 @@ export function isSameCoord(c1, c2) {
  * @property {number} width 
  * @property {number} height 
  * @property {number[]} grid 
- * @property {string} floorColor 
- * @property {string} wallColor 
  * @property {Sprite[]} mice 
+ * @property {Sprite[]} mousetraps 
  * @property {Sprite} farmer 
+ * @property {Sprite} cheese 
  */
 export class Stage {
     /**
@@ -61,9 +59,6 @@ export class Stage {
         this.height = layout.slice(1).filter(line => !line.startsWith(Mark.WALL_ROW)).length;
 
         this.grid = new Array(this.width * this.height).fill(CellValue.NOTHING);
-        this.floorColor = "#edd08c";
-        this.wallColor = "#8cceed";
-        this.borderColor = "#bb1826";
 
         this.mice = [];
         this.mousetraps = [];
@@ -264,152 +259,4 @@ export function moveSprite(stage, sprite, direction) {
             sprite.col += 1;
             break;
     }
-}
-
-/**
- * 
- * @param {Stage} stage 
- * @param {Game} game
- */
-export function updateStage(stage, game) {
-    updateSprite(stage.farmer, game);
-    updateSprite(stage.cheese, game);
-    for (const mouse of stage.mice) {
-        updateSprite(mouse, game);
-    }
-    for (const mousetrap of stage.mousetraps) {
-        updateSprite(mousetrap, game);
-    }
-
-    const { cellSize } = game;
-
-    game.renderQueue.pushRender(
-        (context) => renderStageBackground(
-            context,
-            stage.floorColor,
-            stage.width * cellSize,
-            stage.height * cellSize
-        ),
-        RenderLayer.BACKGROUND,
-        `stage background`
-    );
-
-    game.renderQueue.pushRender(
-        (context) => setWallStyle(context, stage.borderColor),
-        RenderLayer.WALLS,
-        `set wall style`
-    );
-
-    game.renderQueue.pushRender(
-        (context) => renderStageBorder(
-            context,
-            stage.width * cellSize,
-            stage.height * cellSize
-        ),
-        RenderLayer.WALLS,
-        `stage border`
-    );
-
-    // Selectively render the walls
-    for (let row = 0; row < stage.height; ++row) {
-        for (let col = 0; col < stage.width; ++col) {
-            const coord = { row, col };
-            const topWall = stage.hasTopWall(coord);
-            const leftWall = stage.hasLeftWall(coord);
-
-            if (topWall && leftWall) {
-                game.renderQueue.pushRender(
-                    (context) => renderTopLeftWall(context, cellSize, row, col),
-                    RenderLayer.WALLS,
-                    `top-left wall (${row}, ${col})`
-                );
-            } else if (topWall) {
-                game.renderQueue.pushRender(
-                    (context) => renderTopWall(context, cellSize, row, col),
-                    RenderLayer.WALLS,
-                    `top wall (${row}, ${col})`
-                );
-            } else if (leftWall) {
-                game.renderQueue.pushRender(
-                    (context) => renderLeftWall(context, cellSize, row, col),
-                    RenderLayer.WALLS,
-                    `left wall (${row}, ${col})`
-                );
-            }
-        }
-    }
-}
-/**
- * 
- * @param {CanvasRenderingContext2D} context 
- * @param {string} floorColor
- * @param {number} stageWidth
- * @param {number} stageHeight
- */
-function renderStageBackground(context, floorColor, width, height) {
-    context.fillStyle = floorColor;
-    context.fillRect(0, 0, width, height);
-}
-
-/**
- * 
- * @param {CanvasRenderingContext2D} context 
- * @param {string} wallColor 
- */
-function setWallStyle(context, wallColor) {
-    context.strokeStyle = wallColor;
-    context.lineWidth = 3;
-}
-
-/**
- * 
- * @param {CanvasRenderingContext2D} context 
- * @param {number} width 
- * @param {number} height 
- */
-function renderStageBorder(context, width, height) {
-    context.strokeRect(0, 0, width, height);
-}
-
-/**
- * 
- * @param {CanvasRenderingContext2D} context 
- * @param {number} cellSize 
- * @param {number} row 
- * @param {number} col 
- */
-function renderTopLeftWall(context, cellSize, row, col) {
-    context.beginPath();
-    context.moveTo((col + 0) * cellSize, (row + 1) * cellSize);
-    context.lineTo((col + 0) * cellSize, (row + 0) * cellSize);
-    context.lineTo((col + 1) * cellSize, (row + 0) * cellSize);
-    context.stroke();
-}
-
-/**
- * 
- * @param {CanvasRenderingContext2D} context 
- * @param {number} cellSize 
- * @param {number} row 
- * @param {number} col 
- */
-function renderTopWall(context, cellSize, row, col) {
-    context.beginPath();
-    context.moveTo((col + 0) * cellSize, (row + 0) * cellSize);
-    context.lineTo((col + 1) * cellSize, (row + 0) * cellSize);
-    context.stroke();
-}
-
-/**
- * 
- * @param {CanvasRenderingContext2D} context 
- * @param {number} cellSize 
- * @param {number} row 
- * @param {number} col 
- */
-function renderLeftWall(context, cellSize, row, col) {
-    context.beginPath();
-    context.moveTo((col + 0) * cellSize, (row + 1) * cellSize);
-    context.lineTo((col + 0) * cellSize, (row + 0) * cellSize);
-    context.stroke();
 }
