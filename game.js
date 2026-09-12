@@ -1,7 +1,7 @@
-import { getActionPlan } from "./actions.js";
 import { render } from "./rendering.js";
 import { getStage } from "./stage-layouts.js";
 import { Direction } from "./stage.js";
+import { GameState, setNextFarmerMove, update } from "./states.js";
 
 export class Game {
     /**
@@ -16,12 +16,14 @@ export class Game {
         this.canvas = canvas;
         this.context = initContext(canvas);
 
+        this.state = GameState.LOAD;
+
         this.stage = getStage(0);
         this.cellSize = 48;
 
         this.loadedImages = new Map();
 
-        const imageNames = [
+        this.imageNames = [
             "mouse",
             "farmer",
             "cheese",
@@ -31,7 +33,7 @@ export class Game {
             "mousetrap_whack"
         ];
 
-        for (const imageName of imageNames) {
+        for (const imageName of this.imageNames) {
             const image = new Image();
             image.onload = () => { this.loadedImages.set(imageName, image); };
             image.src = imageName + ".png";
@@ -53,6 +55,7 @@ export class Game {
                 numFrames++;
                 this.elapsedTime = elapsedTime;
 
+                update(this, currentTime);
                 render(this);
             }
 
@@ -70,6 +73,8 @@ export class Game {
             if (logFPS) {
                 console.log(this.fpsActual + " FPS");
             }
+
+            update(this);
         }, 1000);
     }
 }
@@ -77,6 +82,7 @@ export class Game {
 /**
  * 
  * @param {HTMLCanvasElement} canvas 
+ * @returns {CanvasRenderingContext2D}
  */
 function initContext(canvas) {
     const context = canvas.getContext("2d", {
@@ -91,30 +97,29 @@ function initContext(canvas) {
 
 function setupEventListeners(game) {
     window.addEventListener('keydown', (e) => {
-        let direction;
 
         switch (e.key) {
             case 'ArrowUp':
-                direction = Direction.UP;
+                game.stage.nextFarmerMove = Direction.UP;
                 break;
 
             case 'ArrowDown':
-                direction = Direction.DOWN;
+                game.stage.nextFarmerMove = Direction.DOWN;
                 break;
 
             case 'ArrowLeft':
-                direction = Direction.LEFT;
+                game.stage.nextFarmerMove = Direction.LEFT;
                 break;
 
             case 'ArrowRight':
-                direction = Direction.RIGHT;
+                game.stage.nextFarmerMove = Direction.RIGHT;
                 break;
+            
+            default:
+                game.stage.nextFarmerMove = null;
         }
-
-        const actions = getActionPlan(game, direction);
-        for (const action of actions) {
-            action.execute();
-        }
+        
+        update(game);
 
         e.preventDefault();
     });

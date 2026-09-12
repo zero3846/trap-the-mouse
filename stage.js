@@ -65,6 +65,9 @@ export class Stage {
         this.farmer = new Sprite("farmer");
         this.cheese = new Sprite("cheese");
 
+        this.nextFarmerMove = null;
+        this.lastMouseMove = 0;
+
         let row = 0;
         for (let i = 1; i < layout.length; ++i) {
             const wallRow = layout[i].charAt(0) === Mark.WALL_ROW;
