@@ -258,6 +258,10 @@ export class Stage extends Renderable {
             }
         }
 
+        if (isSameCoord(stage.farmer, neighbor)) {
+            return false;
+        }
+
         if (isSameCoord(stage.cheese, neighbor)) {
             return false;
         }
