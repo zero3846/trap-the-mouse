@@ -1,7 +1,7 @@
 import { Scene } from "./scene.js";
 import { imagesReady, loadImages, MouseTrap } from "./sprite.js";
 import { getStage } from "./stage-layouts.js";
-import { Direction } from "./stage.js";
+import { Direction, isSameCoord } from "./stage.js";
 
 export class Game {
     /**
@@ -124,8 +124,20 @@ export class Game {
 
     onFinalFrame() {
         const { stage } = this.scene;
+        const { sprites, farmer, mousetraps } = stage;
+
         for (const sprite of stage.sprites) {
             sprite.finalizeMove();
+        }
+
+        for (let i = 0; i < mousetraps.length; ++i) {
+            const mousetrap = mousetraps[i];
+
+            if (isSameCoord(farmer, mousetrap)) {
+                // Pick up mousetrap
+                mousetraps.splice(i, 1);
+                break;
+            }
         }
     }
 

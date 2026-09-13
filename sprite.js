@@ -127,6 +127,10 @@ export class MouseTrap extends Sprite {
         super("mousetrap", "set", cellSize);
     }
 
+    triggerTrap() {
+        this.state = "triggered";
+    }
+
     /**
      * 
      * @param {Game} game 
