@@ -1,5 +1,5 @@
 import { Scene } from "./scene.js";
-import { imagesReady, loadImages } from "./sprite.js";
+import { imagesReady, loadImages, MouseTrap } from "./sprite.js";
 import { getStage } from "./stage-layouts.js";
 import { Direction } from "./stage.js";
 
@@ -96,6 +96,10 @@ export class Game {
                 case 'Control':
                     this.moveMice();
                     break;
+
+                case 'f':
+                    this.layTrap();
+                    break;
             }
 
         });
@@ -166,5 +170,15 @@ export class Game {
         }
 
         this.startMovingFrames();
+    }
+
+    layTrap() {
+        const { stage } = this.scene;
+        const { farmer, mousetraps } = stage;
+
+        const mousetrap = new MouseTrap(stage.cellSize);
+        mousetrap.row = farmer.row;
+        mousetrap.col = farmer.col;
+        mousetraps.push(mousetrap);
     }
 }

@@ -124,7 +124,7 @@ export class Mouse extends Sprite {
 
 export class MouseTrap extends Sprite {
     constructor(cellSize) {
-        super("mousetrap", "triggered", cellSize);
+        super("mousetrap", "set", cellSize);
     }
 
     /**
@@ -139,11 +139,12 @@ export class MouseTrap extends Sprite {
         if (layer === Layer.LOW_SPRITE) {
             const image = loadedImages.get("mousetrap_base");
             context.drawImage(image, 0, 0, cellSize, cellSize);
-        } else if (layer === Layer.HIGH_SPRITE) {
             if (state === "set") {
-                const image = loadedImages.get("mousetrap_base");
+                const image = loadedImages.get("mousetrap_set");
                 context.drawImage(image, 0, 0, cellSize, cellSize);
-            } else if (state === "triggered") {
+            }
+        } else if (layer === Layer.HIGH_SPRITE) {
+            if (state === "triggered") {
                 const images = [
                     loadedImages.get("mousetrap_whack"),
                     loadedImages.get("mousetrap_swing"),
