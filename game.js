@@ -90,10 +90,6 @@ export class Game {
     onImageLoad() {
         if (imagesReady()) {
             this.scene.stage = getStage(0);
-
-            setInterval(() => {
-                this.moveMice();
-            }, 1000);
         }
     }
 
@@ -108,6 +104,8 @@ export class Game {
         if (stage.isMoveAllowed(farmer, direction)) {
             farmer.move(direction);
         }
+
+        this.moveMice();
     }
 
     moveMice() {
