@@ -1,8 +1,11 @@
 import { Layer, Renderable } from "./renderable.js";
+import { Splash } from "./splash.js";
+import { getStage } from "./stage-layouts.js";
 
 export class Scene extends Renderable {
     constructor() {
         super();
+        this.splash = new Splash();
         this.stage = undefined;
     }
 
@@ -10,7 +13,11 @@ export class Scene extends Renderable {
         if (this.stage != null) {
             return [ this.stage ];
         }
-        return [];
+        return [ this.splash ];
+    }
+
+    loadStage(stageNum) {
+        this.stage = getStage(stageNum);
     }
 
     /**

@@ -9,13 +9,17 @@ const imageNames = [
     "mousetrap_base",
     "mousetrap_set",
     "mousetrap_swing",
-    "mousetrap_whack"
+    "mousetrap_whack",
 ];
 
 const loadedImages = new Map();
 
 export function imagesReady() {
     return loadedImages.size === imageNames.length;
+}
+
+export function getImageProgress() {
+    return loadedImages.size / imageNames.length;
 }
 
 /**
@@ -91,7 +95,7 @@ export class Sprite extends Renderable {
      * @param {Game} game 
      * @param {number} currentTime 
      */
-    update(game, currentTime) {
+    updateObject(game, currentTime) {
         const {
             cellSize,
             row, col,

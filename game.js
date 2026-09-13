@@ -1,6 +1,5 @@
 import { Scene } from "./scene.js";
 import { imagesReady, loadImages, MouseTrap } from "./sprite.js";
-import { getStage } from "./stage-layouts.js";
 import { Direction, isSameCoord } from "./stage.js";
 
 export class Game {
@@ -101,7 +100,7 @@ export class Game {
 
     onImageLoad() {
         if (imagesReady()) {
-            this.scene.stage = getStage(0);
+            this.scene.loadStage(0);
 
             setInterval(() => this.moveMice(), 1000);
         }
