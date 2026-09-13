@@ -42,27 +42,48 @@ export class Sprite extends Renderable {
         this.row = 0;
         this.col = 0;
         this.cellSize = cellSize;
+        this.direction = Direction.NONE;
+        this.dx = 0;
+        this.dy = 0;
     }
 
     /**
      * 
      * @param {number} direction 
+     * @param {number} stepSize;
      */
-    move(direction) {
-        switch (direction) {
+    beginMove(direction, stepSize) {
+        this.direction = direction;
+        this.dx = 0;
+        this.dy = 0;
+
+        // Setting the row and col at the beginning
+        // of a move helps avoid colliding sprites
+        // that shouldn't occupy the same cell.
+        switch (this.direction) {
             case Direction.UP:
                 this.row -= 1;
+                this.dy = stepSize;
                 break;
             case Direction.DOWN:
                 this.row += 1;
+                this.dy = -stepSize;
                 break;
             case Direction.LEFT:
                 this.col -= 1;
+                this.dx = stepSize;
                 break;
             case Direction.RIGHT:
                 this.col += 1;
+                this.dx = -stepSize;
                 break;
         }
+    }
+
+    finalizeMove() {
+        this.direction = Direction.NONE;
+        this.dx = 0;
+        this.dy = 0;
     }
 
     /**
@@ -71,9 +92,12 @@ export class Sprite extends Renderable {
      * @param {number} currentTime 
      */
     update(game, currentTime) {
-        const { cellSize, row, col } = this;
-        this.x = col * cellSize;
-        this.y = row * cellSize;
+        const { cellSize, row, col, dx, dy } = this;
+        const { movingFrame, framesBetweenMoves } = game;
+        const adjustment = framesBetweenMoves - movingFrame;
+        
+        this.x = col * cellSize + adjustment * dx;
+        this.y = row * cellSize + adjustment * dy;
     }
 
     /**

@@ -2,6 +2,7 @@ import { Layer, Renderable } from "./renderable.js";
 import { Cheese, Farmer, Mouse, MouseTrap, Sprite } from "./sprite.js";
 
 export const Direction = {
+    NONE: -1,
     UP: 0,
     DOWN: 1,
     LEFT: 2,

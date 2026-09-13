@@ -9,7 +9,7 @@ export class Game {
      * @param {HTMLCanvasElement} canvas 
      */
     constructor(canvas) {
-        this.fpsTarget = 5;     // The max frames-per-second
+        this.fpsTarget = 15;    // The max frames-per-second
         this.fpsActual = 0;     // The measured frames-per-second
         this.logFPS = false;    // Set to true to log frames-per-second
 
@@ -25,6 +25,9 @@ export class Game {
         canvas.width = canvas.clientWidth * dpr;
         canvas.height = canvas.clientHeight * dpr;
         this.context.scale(dpr, dpr);
+
+        this.framesBetweenMoves = 8;
+        this.movingFrame = 0;
     }
 
     start() {
@@ -38,7 +41,20 @@ export class Game {
                 lastTime = currentTime;
                 this.fpsActual++;
 
-                const { scene } = this;
+                const {
+                    scene,
+                    movingFrame,
+                    framesBetweenMoves
+                } = this;
+
+                if (movingFrame > 0) {
+                    if (this.movingFrame === this.framesBetweenMoves) {
+                        this.onFinalFrame();
+                        this.movingFrame = 0;
+                    } else {
+                        this.movingFrame++;
+                    }
+                }
 
                 scene.update(this, currentTime);
                 scene.renderLayers(this);
@@ -53,10 +69,16 @@ export class Game {
 
     setupEventListeners() {
         window.addEventListener('keydown', (e) => {
+            e.preventDefault();
+
+            if (this.movingFrame > 0) {
+                return;
+            }
 
             switch (e.key) {
                 case 'ArrowUp':
                     this.moveFarmer(Direction.UP);
+                    this.moveMice();
                     break;
 
                 case 'ArrowDown':
@@ -70,9 +92,12 @@ export class Game {
                 case 'ArrowRight':
                     this.moveFarmer(Direction.RIGHT);
                     break;
+
+                case 'Control':
+                    this.moveMice();
+                    break;
             }
 
-            e.preventDefault();
         });
         
         loadImages(this);
@@ -93,16 +118,24 @@ export class Game {
         }
     }
 
-    moveFarmer(direction) {
-        if (direction == null) {
-            return;
+    onFinalFrame() {
+        const { stage } = this.scene;
+        for (const sprite of stage.sprites) {
+            sprite.finalizeMove();
         }
+    }
 
+    startMovingFrames() {
+        this.movingFrame = 1;
+    }
+
+    moveFarmer(direction) {
         const { stage } = this.scene;
         const { farmer } = stage;
 
         if (stage.isMoveAllowed(farmer, direction)) {
-            farmer.move(direction);
+            const stepSize = farmer.cellSize / this.framesBetweenMoves;
+            farmer.beginMove(direction, stepSize);
         }
 
         this.moveMice();
@@ -128,7 +161,10 @@ export class Game {
             }
 
             const choice = Math.floor(Math.random() * (allowed.length + 1));
-            mouse.move(allowed[choice]);
+            const stepSize = mouse.cellSize / this.framesBetweenMoves;
+            mouse.beginMove(allowed[choice], stepSize);
         }
+
+        this.startMovingFrames();
     }
 }
