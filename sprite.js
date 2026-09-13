@@ -118,7 +118,15 @@ export class Sprite extends Renderable {
 
 export class Mouse extends Sprite {
     constructor(cellSize) {
-        super("mouse", "left", cellSize);
+        super("mouse", "alive", cellSize);
+    }
+
+    isAlive() {
+        return this.state === "alive";
+    }
+
+    kill() {
+        this.state = "dead";
     }
 }
 
@@ -127,7 +135,7 @@ export class MouseTrap extends Sprite {
         super("mousetrap", "set", cellSize);
     }
 
-    triggerTrap() {
+    trigger() {
         this.state = "triggered";
     }
 
@@ -163,7 +171,7 @@ export class MouseTrap extends Sprite {
 
 export class Farmer extends Sprite {
     constructor(cellSize) {
-        super("farmer", "left", cellSize);
+        super("farmer", undefined, cellSize);
     }
 }
 

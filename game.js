@@ -124,7 +124,12 @@ export class Game {
 
     onFinalFrame() {
         const { stage } = this.scene;
-        const { sprites, farmer, mousetraps } = stage;
+        const {
+            sprites,
+            farmer,
+            mice,
+            mousetraps
+        } = stage;
 
         for (const sprite of stage.sprites) {
             sprite.finalizeMove();
@@ -138,7 +143,24 @@ export class Game {
                 mousetraps.splice(i, 1);
                 break;
             }
+
+            let trapped = -1;
+            for (let j = 0; j < mice.length; ++j) {
+                const mouse = mice[j];
+
+                if (isSameCoord(mouse, mousetrap)) {
+                    trapped = j;
+                    break;
+                }
+            }
+
+            if (trapped >= 0) {
+                const mouse = mice[trapped];
+                mousetrap.trigger();
+                mouse.kill();
+            }
         }
+
     }
 
     startMovingFrames() {
@@ -160,6 +182,7 @@ export class Game {
     moveMice() {
         const { stage } = this.scene;
         const { mice } = stage;
+
         const directions = [
             Direction.UP,
             Direction.DOWN,
@@ -167,7 +190,9 @@ export class Game {
             Direction.RIGHT
         ];
 
-        for (const mouse of mice) {
+        const livingMice = mice.filter(mouse => mouse.isAlive());
+
+        for (const mouse of livingMice) {
             const allowed = directions.filter(
                 direction => stage.isMoveAllowed(mouse, direction)
             );
