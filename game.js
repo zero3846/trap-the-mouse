@@ -25,6 +25,9 @@ export class Game {
         canvas.width = canvas.clientWidth * dpr;
         canvas.height = canvas.clientHeight * dpr;
         this.context.scale(dpr, dpr);
+
+        this.inputBuffer = [];
+        this.inputLimit = 1;
     }
 
     start() {
@@ -62,24 +65,19 @@ export class Game {
 
             switch (e.key) {
                 case 'ArrowUp':
-                    this.moveFarmer(Direction.UP);
-                    this.moveMice();
+                    this.onDirectionInput(Direction.UP);
                     break;
 
                 case 'ArrowDown':
-                    this.moveFarmer(Direction.DOWN);
+                    this.onDirectionInput(Direction.DOWN);
                     break;
 
                 case 'ArrowLeft':
-                    this.moveFarmer(Direction.LEFT);
+                    this.onDirectionInput(Direction.LEFT);
                     break;
 
                 case 'ArrowRight':
-                    this.moveFarmer(Direction.RIGHT);
-                    break;
-
-                case 'Control':
-                    this.moveMice();
+                    this.onDirectionInput(Direction.RIGHT);
                     break;
 
                 case 'f':
@@ -111,55 +109,42 @@ export class Game {
 
     onAnimationFrame() {
         const { stage } = this.scene;
+        if (stage == null) {
+            return;
+        }
 
-        if (stage != null) {
-            for (const sprite of stage.sprites) {
-                if (sprite.isAdvanceable()) {
-                    sprite.advanceFrame();
-                }
+        const { sprites } = stage;
+        for (const sprite of sprites) {
+            if (sprite.isAdvanceable()) {
+                sprite.advanceFrame();
             }
+        }
+
+        const { inputBuffer } = this;
+        const { farmer } = stage;
+        if (!farmer.isAdvanceable() && inputBuffer.length > 0) {
+            const direction = inputBuffer.pop();
+            this.moveFarmer(direction);
         }
     }
 
-    onFinalFrame() {
+    onDirectionInput(direction) {
         const { stage } = this.scene;
-        const {
-            sprites,
-            farmer,
-            mice,
-            mousetraps
-        } = stage;
-
-        for (const sprite of stage.sprites) {
-            sprite.finalizeMove();
+        if (stage == null) {
+            return;
         }
 
-        for (let i = 0; i < mousetraps.length; ++i) {
-            const mousetrap = mousetraps[i];
-
-            if (isSameCoord(farmer, mousetrap)) {
-                // Pick up mousetrap
-                mousetraps.splice(i, 1);
-                break;
+        const { inputBuffer, inputLimit } = this;
+        const { farmer, mousetraps } = stage;
+        if (farmer.isAdvanceable() || inputBuffer.length > 0) {
+            // Limit the queued inputs or it starts to feel very laggy.
+            if (inputBuffer.length < inputLimit) {
+                inputBuffer.push(direction);
             }
-
-            let trapped = -1;
-            for (let j = 0; j < mice.length; ++j) {
-                const mouse = mice[j];
-
-                if (isSameCoord(mouse, mousetrap)) {
-                    trapped = j;
-                    break;
-                }
-            }
-
-            if (trapped >= 0) {
-                const mouse = mice[trapped];
-                mousetrap.trigger();
-                mouse.kill();
-            }
+            return;
         }
 
+        this.moveFarmer(direction);
     }
 
     moveFarmer(direction) {
