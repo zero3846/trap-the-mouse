@@ -1,7 +1,7 @@
-import { render } from "./rendering.js";
+import { Scene } from "./scene.js";
+import { imagesReady, loadImages } from "./sprite.js";
 import { getStage } from "./stage-layouts.js";
-import { Direction } from "./stage.js";
-import { GameState, setNextFarmerMove, update } from "./states.js";
+import { Direction, isMoveAllowed, moveSprite } from "./stage.js";
 
 export class Game {
     /**
@@ -16,28 +16,7 @@ export class Game {
         this.canvas = canvas;
         this.context = initContext(canvas);
 
-        this.state = GameState.LOAD;
-
-        this.stage = getStage(0);
-        this.cellSize = 48;
-
-        this.loadedImages = new Map();
-
-        this.imageNames = [
-            "mouse",
-            "farmer",
-            "cheese",
-            "mousetrap_base",
-            "mousetrap_set",
-            "mousetrap_swing",
-            "mousetrap_whack"
-        ];
-
-        for (const imageName of this.imageNames) {
-            const image = new Image();
-            image.onload = () => { this.loadedImages.set(imageName, image); };
-            image.src = imageName + ".png";
-        }
+        this.scene = new Scene();
     }
 
     start() {
@@ -55,16 +34,18 @@ export class Game {
                 numFrames++;
                 this.elapsedTime = elapsedTime;
 
-                update(this, currentTime);
-                render(this);
+                const { scene } = this;
+
+                scene.update(this, currentTime);
+                scene.renderLayers(this);
             }
 
             requestAnimationFrame(animate);
         }
 
         requestAnimationFrame(animate);
-
         setupEventListeners(this);
+        loadImages(this);
 
         setInterval(() => {
             this.fpsActual = numFrames;
@@ -73,9 +54,54 @@ export class Game {
             if (logFPS) {
                 console.log(this.fpsActual + " FPS");
             }
-
-            update(this);
         }, 1000);
+    }
+
+    onImageLoad() {
+        if (imagesReady()) {
+            this.scene.stage = getStage(0);
+
+            setInterval(() => {
+                this.moveMice();
+            }, 1000);
+        }
+    }
+
+    moveFarmer(direction) {
+        if (direction == null) {
+            return;
+        }
+
+        const { stage } = this.scene;
+        const { farmer } = stage;
+
+        if (isMoveAllowed(stage, farmer, direction)) {
+            moveSprite(stage, farmer, direction);
+        }
+    }
+
+    moveMice() {
+        const { stage } = this.scene;
+        const { mice } = stage;
+        const directions = [
+            Direction.UP,
+            Direction.DOWN,
+            Direction.LEFT,
+            Direction.RIGHT
+        ];
+
+        for (const mouse of mice) {
+            const allowed = directions.filter(
+                direction => isMoveAllowed(stage, mouse, direction)
+            );
+
+            if (allowed.length < 1) {
+                continue;
+            }
+
+            const choice = Math.floor(Math.random() * (allowed.length + 1));
+            moveSprite(stage, mouse, allowed[choice]);
+        }
     }
 }
 
@@ -100,26 +126,21 @@ function setupEventListeners(game) {
 
         switch (e.key) {
             case 'ArrowUp':
-                game.stage.nextFarmerMove = Direction.UP;
+                game.moveFarmer(Direction.UP);
                 break;
 
             case 'ArrowDown':
-                game.stage.nextFarmerMove = Direction.DOWN;
+                game.moveFarmer(Direction.DOWN);
                 break;
 
             case 'ArrowLeft':
-                game.stage.nextFarmerMove = Direction.LEFT;
+                game.moveFarmer(Direction.LEFT);
                 break;
 
             case 'ArrowRight':
-                game.stage.nextFarmerMove = Direction.RIGHT;
+                game.moveFarmer(Direction.RIGHT);
                 break;
-            
-            default:
-                game.stage.nextFarmerMove = null;
         }
-        
-        update(game);
 
         e.preventDefault();
     });

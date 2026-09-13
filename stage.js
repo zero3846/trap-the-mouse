@@ -1,4 +1,5 @@
-import { Sprite } from "./sprite.js";
+import { Layer, Renderable } from "./renderable.js";
+import { Cheese, Farmer, Mouse, MouseTrap, Sprite } from "./sprite.js";
 
 export const Direction = {
     UP: 0,
@@ -49,12 +50,15 @@ export function isSameCoord(c1, c2) {
  * @property {Sprite} farmer 
  * @property {Sprite} cheese 
  */
-export class Stage {
+export class Stage extends Renderable {
     /**
      * 
      * @param {string[]} layout 
      */
     constructor(layout) {
+        super();
+
+        this.cellSize = 48;
         this.numCols = layout[0].replaceAll(Mark.WALL_COL, "").length - 1;
         this.numRows = layout.slice(1).filter(line => !line.startsWith(Mark.WALL_ROW)).length;
 
@@ -62,8 +66,8 @@ export class Stage {
 
         this.mice = [];
         this.mousetraps = [];
-        this.farmer = new Sprite("farmer");
-        this.cheese = new Sprite("cheese");
+        this.farmer = new Farmer(this.cellSize);
+        this.cheese = new Cheese(this.cellSize);
 
         this.nextFarmerMove = null;
         this.lastMouseMove = 0;
@@ -94,7 +98,7 @@ export class Stage {
                         this.farmer.row = row;
                         this.farmer.col = col;
                     } else if (mark === Mark.MOUSE) {
-                        const mouse = new Sprite("mouse");
+                        const mouse = new Mouse(this.cellSize);
                         mouse.row = row;
                         mouse.col = col;
                         this.mice.push(mouse);
@@ -102,7 +106,7 @@ export class Stage {
                         this.cheese.row = row;
                         this.cheese.col = col;
                     } else if (mark === Mark.MOUSETRAP) {
-                        const mousetrap = new Sprite("mousetrap");
+                        const mousetrap = new MouseTrap(this.cellSize);
                         mousetrap.row = row;
                         mousetrap.col = col;
                         this.mousetraps.push(mousetrap);
@@ -118,6 +122,27 @@ export class Stage {
                 row++;
             }
         }
+    }
+
+    get width() {
+        return this.cellSize * this.numCols;
+    }
+
+    get height() {
+        return this.cellSize * this.numRows;
+    }
+
+    get sprites() {
+        return [
+            ...this.mice,
+            ...this.mousetraps,
+            this.cheese,
+            this.farmer
+        ];
+    }
+
+    get children() {
+        return this.sprites;
     }
 
     /**
@@ -196,6 +221,61 @@ export class Stage {
             };
         }
         throw new Error("Invalid direction: " + direction);
+    }
+
+    /**
+     * 
+     * @param {Game} game 
+     * @param {number} layer 
+     */
+    renderObject(game, layer) {
+        const { context } = game;
+        const { cellSize, width, height } = this;
+
+        if (layer === Layer.BACKGROUND) {
+            const floorColor = "#edd08c";
+            const wallColor = "#bb1826";
+
+            // Render floor
+            context.fillStyle = floorColor;
+            context.fillRect(0, 0, width, height);
+        } else if (layer === Layer.LOW_WALL) {
+            const wallColor = "#bb1826";
+    
+            // Prepare for rendering walls
+            context.strokeStyle = wallColor;
+            context.lineWidth = 3;
+    
+            // Render the border walls
+            context.strokeRect(0, 0, width, height);
+    
+            // Render the interior walls
+            for (let row = 0; row < this.numRows; ++row) {
+                for (let col = 0; col < this.numCols; ++col) {
+                    const coord = { row, col };
+                    const topWall = this.hasTopWall(coord);
+                    const leftWall = this.hasLeftWall(coord);
+    
+                    if (topWall && leftWall) {
+                        context.beginPath();
+                        context.moveTo((col + 0) * cellSize, (row + 1) * cellSize);
+                        context.lineTo((col + 0) * cellSize, (row + 0) * cellSize);
+                        context.lineTo((col + 1) * cellSize, (row + 0) * cellSize);
+                        context.stroke();
+                    } else if (topWall) {
+                        context.beginPath();
+                        context.moveTo((col + 0) * cellSize, (row + 0) * cellSize);
+                        context.lineTo((col + 1) * cellSize, (row + 0) * cellSize);
+                        context.stroke();
+                    } else if (leftWall) {
+                        context.beginPath();
+                        context.moveTo((col + 0) * cellSize, (row + 1) * cellSize);
+                        context.lineTo((col + 0) * cellSize, (row + 0) * cellSize);
+                        context.stroke();
+                    }
+                }
+            }
+        }
     }
 }
 

@@ -1,0 +1,79 @@
+import { Layer, Renderable } from "./renderable.js";
+
+export class Scene extends Renderable {
+    constructor() {
+        super();
+        this.stage = undefined;
+    }
+
+    get children() {
+        if (this.stage != null) {
+            return [ this.stage ];
+        }
+        return [];
+    }
+
+    /**
+     * 
+     * @param {Game} game 
+     * @param {number} currentTime 
+     */
+    updateObject(game, currentTime) {
+        const { stage } = this;
+
+        if (stage != null) {
+            const {
+                canvas,
+                context
+            } = game;
+
+            const {
+                width: bw,
+                height: bh
+            } = canvas.getBoundingClientRect();
+
+            const {
+                width: sw,
+                height: sh
+            } = stage;
+
+            stage.x = (bw - sw) / 2;
+            stage.y = (bh - sh) / 2;
+        }
+    }
+
+    /**
+     * 
+     * @param {Game} game 
+     * @param {number} layer 
+     */
+    renderObject(game, layer) {
+        const {
+            canvas,
+            context
+        } = game;
+
+        const {
+            width: bw,
+            height: bh
+        } = canvas.getBoundingClientRect();
+
+        if (layer === Layer.BACKGROUND) {
+            // Clear the canvas
+            context.clearRect(0, 0, bw, bh);
+        }
+    }
+
+    /**
+     * 
+     * @param {Game} game 
+     */
+    renderLayers(game) {
+        this.render(game, Layer.BACKGROUND);
+        this.render(game, Layer.LOW_WALL);
+        this.render(game, Layer.LOW_SPRITE);
+        this.render(game, Layer.SPRITE);
+        this.render(game, Layer.HIGH_SPRITE);
+        this.render(game, Layer.FOREGROUND);
+    }
+}
