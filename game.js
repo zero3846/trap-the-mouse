@@ -1,7 +1,7 @@
 import { Scene } from "./scene.js";
 import { imagesReady, loadImages } from "./sprite.js";
 import { getStage } from "./stage-layouts.js";
-import { Direction, isMoveAllowed, moveSprite } from "./stage.js";
+import { Direction } from "./stage.js";
 
 export class Game {
     /**
@@ -11,19 +11,24 @@ export class Game {
     constructor(canvas) {
         this.fpsTarget = 5;     // The max frames-per-second
         this.fpsActual = 0;     // The measured frames-per-second
-        this.elapsedTime = 0;   // Time since last frame
-
-        this.canvas = canvas;
-        this.context = initContext(canvas);
+        this.logFPS = false;    // Set to true to log frames-per-second
 
         this.scene = new Scene();
+
+        this.canvas = canvas;
+        this.context = canvas.getContext("2d", {
+            alpha: false
+        });
+
+        // Adjust for high-density displays
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = canvas.clientWidth * dpr;
+        canvas.height = canvas.clientHeight * dpr;
+        this.context.scale(dpr, dpr);
     }
 
     start() {
         const renderTimeout_msecs = 1.0 / this.fpsTarget * 1000;
-        const logFPS = false;
-
-        let numFrames = 0;
         let lastTime = 0
 
         const animate = (currentTime) => {
@@ -31,8 +36,7 @@ export class Game {
 
             if (elapsedTime > renderTimeout_msecs) {
                 lastTime = currentTime;
-                numFrames++;
-                this.elapsedTime = elapsedTime;
+                this.fpsActual++;
 
                 const { scene } = this;
 
@@ -44,17 +48,43 @@ export class Game {
         }
 
         requestAnimationFrame(animate);
-        setupEventListeners(this);
+        this.setupEventListeners();
+    }
+
+    setupEventListeners() {
+        window.addEventListener('keydown', (e) => {
+
+            switch (e.key) {
+                case 'ArrowUp':
+                    this.moveFarmer(Direction.UP);
+                    break;
+
+                case 'ArrowDown':
+                    this.moveFarmer(Direction.DOWN);
+                    break;
+
+                case 'ArrowLeft':
+                    this.moveFarmer(Direction.LEFT);
+                    break;
+
+                case 'ArrowRight':
+                    this.moveFarmer(Direction.RIGHT);
+                    break;
+            }
+
+            e.preventDefault();
+        });
+        
         loadImages(this);
 
-        setInterval(() => {
-            this.fpsActual = numFrames;
-            numFrames = 0;
+        if (this.logFPS) {
+            setInterval(() => this.trackFPS(), 1000);
+        }
+    }
 
-            if (logFPS) {
-                console.log(this.fpsActual + " FPS");
-            }
-        }, 1000);
+    trackFPS() {
+        console.log(this.fpsActual + " FPS");
+        this.fpsActual = 0;
     }
 
     onImageLoad() {
@@ -75,8 +105,8 @@ export class Game {
         const { stage } = this.scene;
         const { farmer } = stage;
 
-        if (isMoveAllowed(stage, farmer, direction)) {
-            moveSprite(stage, farmer, direction);
+        if (stage.isMoveAllowed(farmer, direction)) {
+            farmer.move(direction);
         }
     }
 
@@ -92,7 +122,7 @@ export class Game {
 
         for (const mouse of mice) {
             const allowed = directions.filter(
-                direction => isMoveAllowed(stage, mouse, direction)
+                direction => stage.isMoveAllowed(mouse, direction)
             );
 
             if (allowed.length < 1) {
@@ -100,48 +130,7 @@ export class Game {
             }
 
             const choice = Math.floor(Math.random() * (allowed.length + 1));
-            moveSprite(stage, mouse, allowed[choice]);
+            mouse.move(allowed[choice]);
         }
     }
-}
-
-/**
- * 
- * @param {HTMLCanvasElement} canvas 
- * @returns {CanvasRenderingContext2D}
- */
-function initContext(canvas) {
-    const context = canvas.getContext("2d", {
-        alpha: false
-    });
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = canvas.clientWidth * dpr;
-    canvas.height = canvas.clientHeight * dpr;
-    context.scale(dpr, dpr);
-    return context;
-}
-
-function setupEventListeners(game) {
-    window.addEventListener('keydown', (e) => {
-
-        switch (e.key) {
-            case 'ArrowUp':
-                game.moveFarmer(Direction.UP);
-                break;
-
-            case 'ArrowDown':
-                game.moveFarmer(Direction.DOWN);
-                break;
-
-            case 'ArrowLeft':
-                game.moveFarmer(Direction.LEFT);
-                break;
-
-            case 'ArrowRight':
-                game.moveFarmer(Direction.RIGHT);
-                break;
-        }
-
-        e.preventDefault();
-    });
 }

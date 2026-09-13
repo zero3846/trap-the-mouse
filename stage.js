@@ -225,6 +225,48 @@ export class Stage extends Renderable {
 
     /**
      * 
+     * @param {StageCoord} start
+     * @param {number} direction 
+     */
+    isMoveAllowed(start, direction) {
+        const stage = this;
+        const neighbor = stage.neighbor(start, direction);
+
+        if (stage.isBoundary(neighbor)) {
+            return false;
+        }
+        
+        if (direction === Direction.UP && stage.hasTopWall(start)) {
+            return false;
+        }
+        
+        if (direction === Direction.DOWN && stage.hasTopWall(neighbor)) {
+            return false;
+        }
+        
+        if (direction === Direction.LEFT && stage.hasLeftWall(start)) {
+            return false;
+        }
+        
+        if (direction === Direction.RIGHT && stage.hasLeftWall(neighbor)) {
+            return false;
+        }
+
+        for (const mouse of stage.mice) {
+            if (isSameCoord(mouse, neighbor)) {
+                return false;
+            }
+        }
+
+        if (isSameCoord(stage.cheese, neighbor)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * 
      * @param {Game} game 
      * @param {number} layer 
      */
@@ -276,70 +318,5 @@ export class Stage extends Renderable {
                 }
             }
         }
-    }
-}
-
-/**
- * 
- * @param {Stage} stage 
- * @param {Sprite} sprite
- * @param {number} direction 
- */
-export function isMoveAllowed(stage, sprite, direction) {
-    const neighbor = stage.neighbor(sprite, direction);
-
-    if (stage.isBoundary(neighbor)) {
-        return false;
-    }
-    
-    if (direction === Direction.UP && stage.hasTopWall(sprite)) {
-        return false;
-    }
-    
-    if (direction === Direction.DOWN && stage.hasTopWall(neighbor)) {
-        return false;
-    }
-    
-    if (direction === Direction.LEFT && stage.hasLeftWall(sprite)) {
-        return false;
-    }
-    
-    if (direction === Direction.RIGHT && stage.hasLeftWall(neighbor)) {
-        return false;
-    }
-
-    for (const mouse of stage.mice) {
-        if (isSameCoord(mouse, neighbor)) {
-            return false;
-        }
-    }
-
-    if (isSameCoord(stage.cheese, neighbor)) {
-        return false;
-    }
-
-    return true;
-}
-
-/**
- * 
- * @param {Stage} stage 
- * @param {Sprite} sprite 
- * @param {number} direction 
- */
-export function moveSprite(stage, sprite, direction) {
-    switch (direction) {
-        case Direction.UP:
-            sprite.row -= 1;
-            break;
-        case Direction.DOWN:
-            sprite.row += 1;
-            break;
-        case Direction.LEFT:
-            sprite.col -= 1;
-            break;
-        case Direction.RIGHT:
-            sprite.col += 1;
-            break;
     }
 }

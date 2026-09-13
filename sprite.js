@@ -1,5 +1,6 @@
 import { Game } from "./game.js";
 import { Layer, Renderable } from "./renderable.js";
+import { Direction } from "./stage.js";
 
 const imageNames = [
     "mouse",
@@ -41,6 +42,27 @@ export class Sprite extends Renderable {
         this.row = 0;
         this.col = 0;
         this.cellSize = cellSize;
+    }
+
+    /**
+     * 
+     * @param {number} direction 
+     */
+    move(direction) {
+        switch (direction) {
+            case Direction.UP:
+                this.row -= 1;
+                break;
+            case Direction.DOWN:
+                this.row += 1;
+                break;
+            case Direction.LEFT:
+                this.col -= 1;
+                break;
+            case Direction.RIGHT:
+                this.col += 1;
+                break;
+        }
     }
 
     /**
