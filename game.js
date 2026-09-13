@@ -25,9 +25,6 @@ export class Game {
         canvas.width = canvas.clientWidth * dpr;
         canvas.height = canvas.clientHeight * dpr;
         this.context.scale(dpr, dpr);
-
-        this.framesBetweenMoves = 8;
-        this.movingFrame = 0;
     }
 
     start() {
@@ -47,15 +44,7 @@ export class Game {
                     framesBetweenMoves
                 } = this;
 
-                if (movingFrame > 0) {
-                    if (this.movingFrame === this.framesBetweenMoves) {
-                        this.onFinalFrame();
-                        this.movingFrame = 0;
-                    } else {
-                        this.movingFrame++;
-                    }
-                }
-
+                this.onAnimationFrame();
                 scene.update(this, currentTime);
                 scene.renderLayers(this);
             }
@@ -70,10 +59,6 @@ export class Game {
     setupEventListeners() {
         window.addEventListener('keydown', (e) => {
             e.preventDefault();
-
-            if (this.movingFrame > 0) {
-                return;
-            }
 
             switch (e.key) {
                 case 'ArrowUp':
@@ -119,6 +104,20 @@ export class Game {
     onImageLoad() {
         if (imagesReady()) {
             this.scene.stage = getStage(0);
+
+            setInterval(() => this.moveMice(), 1000);
+        }
+    }
+
+    onAnimationFrame() {
+        const { stage } = this.scene;
+
+        if (stage != null) {
+            for (const sprite of stage.sprites) {
+                if (sprite.isAdvanceable()) {
+                    sprite.advanceFrame();
+                }
+            }
         }
     }
 
@@ -163,25 +162,28 @@ export class Game {
 
     }
 
-    startMovingFrames() {
-        this.movingFrame = 1;
-    }
-
     moveFarmer(direction) {
         const { stage } = this.scene;
-        const { farmer } = stage;
+        const { farmer, mousetraps } = stage;
 
         if (stage.isMoveAllowed(farmer, direction)) {
-            const stepSize = farmer.cellSize / this.framesBetweenMoves;
-            farmer.beginMove(direction, stepSize);
-        }
+            farmer.beginMove(direction);
 
-        this.moveMice();
+            for (let i = 0; i < mousetraps.length; ++i) {
+                const mousetrap = mousetraps[i];
+
+                if (isSameCoord(farmer, mousetrap)) {
+                    // Pick up mousetrap
+                    mousetraps.splice(i, 1);
+                    break;
+                }
+            }
+        }
     }
 
     moveMice() {
         const { stage } = this.scene;
-        const { mice } = stage;
+        const { farmer, mice, mousetraps } = stage;
 
         const directions = [
             Direction.UP,
@@ -190,7 +192,8 @@ export class Game {
             Direction.RIGHT
         ];
 
-        const livingMice = mice.filter(mouse => mouse.isAlive());
+        const liveTraps = mousetraps.filter(trap => trap.isSet());
+        const livingMice = mice.filter(mouse => mouse.isAlive() && !mouse.isAdvanceable());
 
         for (const mouse of livingMice) {
             const allowed = directions.filter(
@@ -202,11 +205,16 @@ export class Game {
             }
 
             const choice = Math.floor(Math.random() * (allowed.length + 1));
-            const stepSize = mouse.cellSize / this.framesBetweenMoves;
-            mouse.beginMove(allowed[choice], stepSize);
-        }
+            mouse.beginMove(allowed[choice]);
 
-        this.startMovingFrames();
+            for (const mousetrap of liveTraps) {
+                if (isSameCoord(mouse, mousetrap)) {
+                    mousetrap.trigger();
+                    mouse.kill();
+                    break;
+                }
+            }
+        }
     }
 
     layTrap() {

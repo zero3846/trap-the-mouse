@@ -42,48 +42,48 @@ export class Sprite extends Renderable {
         this.row = 0;
         this.col = 0;
         this.cellSize = cellSize;
-        this.direction = Direction.NONE;
-        this.dx = 0;
-        this.dy = 0;
+        this.maxIndex = 8;
+        this.index = this.maxIndex;
+        this.prevRow = undefined;
+        this.prevCol = undefined;
     }
 
     /**
      * 
      * @param {number} direction 
-     * @param {number} stepSize;
      */
-    beginMove(direction, stepSize) {
-        this.direction = direction;
-        this.dx = 0;
-        this.dy = 0;
+    beginMove(direction) {
+        this.index = 0;
+        this.prevRow = this.row;
+        this.prevCol = this.col;
 
         // Setting the row and col at the beginning
         // of a move helps avoid colliding sprites
         // that shouldn't occupy the same cell.
-        switch (this.direction) {
+        switch (direction) {
             case Direction.UP:
                 this.row -= 1;
-                this.dy = stepSize;
                 break;
             case Direction.DOWN:
                 this.row += 1;
-                this.dy = -stepSize;
                 break;
             case Direction.LEFT:
                 this.col -= 1;
-                this.dx = stepSize;
                 break;
             case Direction.RIGHT:
                 this.col += 1;
-                this.dx = -stepSize;
                 break;
         }
     }
 
-    finalizeMove() {
-        this.direction = Direction.NONE;
-        this.dx = 0;
-        this.dy = 0;
+    isAdvanceable() {
+        const { index, maxIndex } = this;
+        return index < maxIndex;
+    }
+
+    advanceFrame() {
+        const { index, maxIndex } = this;
+        this.index = Math.min(index + 1, maxIndex);
     }
 
     /**
@@ -92,12 +92,24 @@ export class Sprite extends Renderable {
      * @param {number} currentTime 
      */
     update(game, currentTime) {
-        const { cellSize, row, col, dx, dy } = this;
-        const { movingFrame, framesBetweenMoves } = game;
-        const adjustment = framesBetweenMoves - movingFrame;
+        const {
+            cellSize,
+            row, col,
+            prevRow, prevCol,
+            index, maxIndex
+        } = this;
         
-        this.x = col * cellSize + adjustment * dx;
-        this.y = row * cellSize + adjustment * dy;
+        if (prevCol != null) {
+            this.x = ((col - prevCol) * index / maxIndex + prevCol) * cellSize;
+        } else {
+            this.x = col * cellSize;
+        }
+
+        if (prevRow != null) {
+            this.y = ((row - prevRow) * index / maxIndex + prevRow) * cellSize;
+        } else {
+            this.y = row * cellSize;
+        }
     }
 
     /**
@@ -135,8 +147,13 @@ export class MouseTrap extends Sprite {
         super("mousetrap", "set", cellSize);
     }
 
+    isSet() {
+        return this.state === "set";
+    }
+
     trigger() {
         this.state = "triggered";
+        this.index = 0;
     }
 
     /**
@@ -151,12 +168,12 @@ export class MouseTrap extends Sprite {
         if (layer === Layer.LOW_SPRITE) {
             const image = loadedImages.get("mousetrap_base");
             context.drawImage(image, 0, 0, cellSize, cellSize);
-            if (state === "set") {
+            if (state === "set" || this.isAdvanceable()) {
                 const image = loadedImages.get("mousetrap_set");
                 context.drawImage(image, 0, 0, cellSize, cellSize);
             }
         } else if (layer === Layer.HIGH_SPRITE) {
-            if (state === "triggered") {
+            if (state === "triggered" && !this.isAdvanceable()) {
                 const images = [
                     loadedImages.get("mousetrap_whack"),
                     loadedImages.get("mousetrap_swing"),
