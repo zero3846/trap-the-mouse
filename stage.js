@@ -123,6 +123,14 @@ export class Stage extends Renderable {
                 row++;
             }
         }
+
+        this.trapsAvailable = new Array(this.mice.length - this.mousetraps.length);
+        for (let i = 0; i < this.trapsAvailable.length; ++i) {
+            const mousetrap = new MouseTrap(this.cellSize);
+            mousetrap.row = -1;
+            mousetrap.col = i;
+            this.trapsAvailable[i] = mousetrap;
+        }
     }
 
     get width() {
@@ -137,6 +145,7 @@ export class Stage extends Renderable {
         return [
             ...this.mice,
             ...this.mousetraps,
+            ...this.trapsAvailable,
             this.cheese,
             this.farmer
         ];
@@ -222,6 +231,35 @@ export class Stage extends Renderable {
             };
         }
         throw new Error("Invalid direction: " + direction);
+    }
+
+    layTrap(coord) {
+        if (this.trapsAvailable.length === 0) {
+            return false;
+        }
+
+        const mousetrap = this.trapsAvailable.pop();
+        mousetrap.row = coord.row;
+        mousetrap.col = coord.col;
+        
+        this.mousetraps.push(mousetrap);
+        return true;
+    }
+
+    pickupTrap(coord) {
+        const index = this.mousetraps.findIndex(mousetrap => {
+            return isSameCoord(coord, mousetrap)
+        });
+
+        if (index < 0) {
+            return false;
+        }
+
+        const [ mousetrap ] = this.mousetraps.splice(index, 1);
+        mousetrap.row = -1;
+        mousetrap.col = this.trapsAvailable.length;
+        this.trapsAvailable.push(mousetrap);
+        return true;
     }
 
     /**

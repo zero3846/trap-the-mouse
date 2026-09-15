@@ -152,16 +152,7 @@ export class Game {
 
         if (stage.isMoveAllowed(farmer, direction)) {
             farmer.beginMove(direction);
-
-            for (let i = 0; i < mousetraps.length; ++i) {
-                const mousetrap = mousetraps[i];
-
-                if (isSameCoord(farmer, mousetrap)) {
-                    // Pick up mousetrap
-                    mousetraps.splice(i, 1);
-                    break;
-                }
-            }
+            stage.pickupTrap(farmer);
         }
     }
 
@@ -203,11 +194,8 @@ export class Game {
 
     layTrap() {
         const { stage } = this.scene;
-        const { farmer, mousetraps } = stage;
+        const { farmer } = stage;
 
-        const mousetrap = new MouseTrap(stage.cellSize);
-        mousetrap.row = farmer.row;
-        mousetrap.col = farmer.col;
-        mousetraps.push(mousetrap);
+        stage.layTrap(farmer);
     }
 }
