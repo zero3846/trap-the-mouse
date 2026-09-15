@@ -200,4 +200,19 @@ export class Cheese extends Sprite {
     constructor(cellSize) {
         super("cheese", undefined, cellSize);
     }
+
+    /**
+     * 
+     * @param {Game} game 
+     * @param {number} layer
+     */
+    renderObject(game, layer) {
+        const { context } = game;
+        const { type, cellSize } = this;
+
+        if (layer === Layer.LOW_SPRITE) {
+            const image = loadedImages.get(type);
+            context.drawImage(image, 0, 0, cellSize, cellSize);
+        }
+    }
 }

@@ -1,3 +1,4 @@
+import { Banner } from "./banner.js";
 import { Layer, Renderable } from "./renderable.js";
 import { Splash } from "./splash.js";
 import { getStage } from "./stage-layouts.js";
@@ -7,11 +8,12 @@ export class Scene extends Renderable {
         super();
         this.splash = new Splash();
         this.stage = undefined;
+        this.banner = new Banner();
     }
 
     get children() {
         if (this.stage != null) {
-            return [ this.stage ];
+            return [ this.stage, this.banner ];
         }
         return [ this.splash ];
     }

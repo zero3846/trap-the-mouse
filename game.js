@@ -1,6 +1,6 @@
 import { Scene } from "./scene.js";
 import { imagesReady, loadImages, MouseTrap } from "./sprite.js";
-import { Direction, isSameCoord } from "./stage.js";
+import { Direction, isSameCoord, StageState } from "./stage.js";
 
 export class Game {
     /**
@@ -125,6 +125,21 @@ export class Game {
             const direction = inputBuffer.pop();
             this.moveFarmer(direction);
         }
+
+        // Only check the game state when all sprites have
+        // completed their moves.
+        if (stage.stageState !== StageState.PLAY) {
+            let spritesStoppedMoving = true;
+            for (const sprite of sprites) {
+                if (sprite.isAdvanceable()) {
+                    spritesStoppedMoving = false;
+                }
+            }
+
+            if (spritesStoppedMoving) {
+                this.onGameEnd();
+            }
+        }
     }
 
     onDirectionInput(direction) {
@@ -144,6 +159,17 @@ export class Game {
         }
 
         this.moveFarmer(direction);
+    }
+
+    onGameEnd() {
+        const { stage } = this.scene;
+        const { stageState } = stage;
+
+        if (stageState === StageState.WIN) {
+            this.scene.banner.message = "You Win!";
+        } else if (stageState === StageState.LOSE) {
+            this.scene.banner.message = "You Lose!";
+        }
     }
 
     moveFarmer(direction) {

@@ -26,6 +26,12 @@ const Mark = {
     MOUSETRAP: "T",
 };
 
+export const StageState = {
+    PLAY: 0,
+    WIN: 1,
+    LOSE: 2
+}
+
 /**
  * @typedef StageCoord
  * @property {number} row
@@ -131,6 +137,23 @@ export class Stage extends Renderable {
             mousetrap.col = i;
             this.trapsAvailable[i] = mousetrap;
         }
+    }
+
+    get stageState() {
+        let allMiceDead = true;
+        for (const mouse of this.mice) {
+            if (isSameCoord(mouse, this.cheese)) {
+                return StageState.LOSE;
+            }
+
+            if (mouse.isAlive()) {
+                allMiceDead = false;
+            }
+        }
+        if (allMiceDead) {
+            return StageState.WIN;
+        }
+        return StageState.PLAY;
     }
 
     get width() {
@@ -268,6 +291,10 @@ export class Stage extends Renderable {
      * @param {number} direction 
      */
     isMoveAllowed(start, direction) {
+        if (this.stageState != StageState.PLAY) {
+            return false;
+        }
+
         const stage = this;
         const neighbor = stage.neighbor(start, direction);
 
@@ -301,7 +328,8 @@ export class Stage extends Renderable {
             return false;
         }
 
-        if (isSameCoord(stage.cheese, neighbor)) {
+        const startIsFarmer = isSameCoord(stage.farmer, start);
+        if (startIsFarmer && isSameCoord(stage.cheese, neighbor)) {
             return false;
         }
 
